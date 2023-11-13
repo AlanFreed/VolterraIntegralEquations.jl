@@ -1,6 +1,6 @@
 #=
 Created on Tue 27 Jun 2023
-Updated on Fri 20 Oct 2023
+Updated on Mon 13 2023
 -------------------------------------------------------------------------------
 This software, like the language it is written in, is published under the MIT
 License, https://opensource.org/licenses/MIT.
@@ -68,14 +68,14 @@ using
 
 export
     # Memory functions, which are kernels to Volterra integral equations.
-    SLS,    # Zener's 𝑆tandard 𝐿inear 𝑆olid, a.k.a. the kernel of Maxwell-Debye
-    FLS,    # Caputo and Mainardi's 𝐹ractional 𝐿inear 𝑆olid
-    RFS,    # Freed and Rajagopal's 𝑅egularized 𝐹L𝑆
-    KWW,    # 𝐾ohlrausch's and 𝑊illiams & 𝑊atts' stretched exponential
-    CCM,    # 𝐶ole and 𝐶ole's power-law 𝑀odel
-    MPL,    # Williams' 𝑀odified 𝑃ower-𝐿aw model
     BOX,    # the 𝑏𝑜𝑥 model of Neuber, a.k.a. Fung's QLV kernel
+    CCM,    # 𝐶ole and 𝐶ole's power-law 𝑀odel
+    FLS,    # Caputo and Mainardi's 𝐹ractional 𝐿inear 𝑆olid
+    KWW,    # 𝐾ohlrausch's and 𝑊illiams & 𝑊atts' stretched exponential
     MCM,    # 𝑀axwell's 𝐶hain 𝑀odel, a.k.a. the Prony series model
+    MPL,    # Williams' 𝑀odified 𝑃ower-𝐿aw model
+    RFS,    # Freed and Rajagopal's 𝑅egularized 𝐹L𝑆 model
+    SLS,    # Zener's 𝑆tandard 𝐿inear 𝑆olid, a.k.a. the kernel of Maxwell-Debye
 
     # Function used to create weights of quadrature for a given memory function.
     normalizedQuadratureWeights,
@@ -100,6 +100,8 @@ export
 
     # methods
 
+    copy,
+    deepcopy,
     toFile,
     fromFile,
 
@@ -110,7 +112,8 @@ export
 -------------------------------------------------------------------------------
 =#
 
-#= Memory functions are the derivatives of relaxation functions [Freed, 2014], the latter being more commonly found in the literature. All memory functions have an interface of:
+#= 
+Memory functions are the derivatives of relaxation functions [Freed, 2014], the latter being more commonly found in the literature. All memory functions have an interface of:
     k = <memoryFunctionName>(systemOfUnits, time, parameters)\n
 where `systemOfUnits` is either "SI" or "CGS", `time` is current time, and `parameters` is a tuple containing this kernel's physical parameters. Specifically, the memory functions implemented here include:
     BOX     the box model of Neuber, a.k.a. Fung's QLV kernel
@@ -653,10 +656,10 @@ abstract type VolterraIntegralEquation end
 
 struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    n::MInteger                 # current node along a solution path
-    N::Integer                  # number of integration nodes in solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
     dt::PhysicalScalar          # distance separating global integration nodes
+    N::Integer                  # number of integration nodes in a solution path
+    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    n::MInteger                 # current node along a solution path
     # Arrays of length N+1 holding integrated variable rates at the global nodes
     f::ArrayOfPhysicalScalars   # array of integrated response function values
     g::ArrayOfPhysicalScalars   # array of integrated control function values
@@ -724,12 +727,12 @@ struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
             t[n] = t[n-1] + d𝑡
         end
         f′ = ArrayOfPhysicalScalars(3N, 𝑓₀.units-d𝑡.units)
-        new(n, N, Nₘₐₓ, d𝑡, f, g, t, f′, 𝑐, 𝑊)
+        new(d𝑡, N, Nₘₐₓ, n, f, g, t, f′, 𝑐, 𝑊)
     end
 
     # Used by JSON3 whenever this data structure is to be created from a file.
-    function VolterraIntegralScalarEquation(n::MInteger, N::Integer, Nₘₐₓ::Integer, dt::PhysicalScalar, f::ArrayOfPhysicalScalars, g::ArrayOfPhysicalScalars, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalScalars, c::PhysicalScalar, W::ArrayOfPhysicalTensors)
-        new(n, N, Nₘₐₓ, dt, f, g, t, f′, c, W)
+    function VolterraIntegralScalarEquation(dt::PhysicalScalar, N::Integer, Nₘₐₓ::Integer, n::MInteger, f::ArrayOfPhysicalScalars, g::ArrayOfPhysicalScalars, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalScalars, c::PhysicalScalar, W::ArrayOfPhysicalTensors)
+        new(dt, N, Nₘₐₓ, n, f, g, t, f′, c, W)
     end
 end # VolterraIntegralScalarEquation
 
@@ -737,10 +740,10 @@ end # VolterraIntegralScalarEquation
 
 struct VolterraIntegralVectorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    n::MInteger                 # current node along a solution path
+    dt::PhysicalScalar          # distance separating global integration nodes
     N::Integer                  # number of integration nodes in solution path
     Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
-    dt::PhysicalScalar          # distance separating global integration nodes
+    n::MInteger                 # current node along a solution path
     # Arrays of length N+1 holding integrated variable rates at the global nodes
     f::ArrayOfPhysicalVectors   # array of integrated response function values
     g::ArrayOfPhysicalVectors   # array of integrated control function values
@@ -808,12 +811,12 @@ struct VolterraIntegralVectorEquation <: VolterraIntegralEquation
             t[n] = t[n-1] + d𝑡
         end
         f′ = ArrayOfPhysicalVectors(3N, 𝑓₀.vector.len, 𝑓₀.units-d𝑡.units)
-        new(n, N, Nₘₐₓ, d𝑡, f, g, t, f′, 𝑐, 𝑊)
+        new(d𝑡, N, Nₘₐₓ, n, f, g, t, f′, 𝑐, 𝑊)
     end
 
     # Used by JSON3 whenever this data structure is to be created from a file.
-    function VolterraIntegralVectorEquation(n::MInteger, N::Integer, Nₘₐₓ::Integer, dt::PhysicalScalar, f::ArrayOfPhysicalVectors, g::ArrayOfPhysicalVectors, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalVectors, c::PhysicalScalar, W::ArrayOfPhysicalTensors)
-        new(n, N, Nₘₐₓ, dt, f₀, g₀, t₀, f, g, t, f′, c, W)
+    function VolterraIntegralVectorEquation(dt::PhysicalScalar, N::Integer, Nₘₐₓ::Integer, n::MInteger, f::ArrayOfPhysicalVectors, g::ArrayOfPhysicalVectors, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalVectors, c::PhysicalScalar, W::ArrayOfPhysicalTensors)
+        new(dt, N, Nₘₐₓ, n, f₀, g₀, t₀, f, g, t, f′, c, W)
     end
 end # VolterraIntegralVectorEquation
 
@@ -821,10 +824,10 @@ end # VolterraIntegralVectorEquation
 
 struct VolterraIntegralTensorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    n::MInteger                 # current node along a solution path
+    dt::PhysicalScalar          # distance separating global integration nodes
     N::Integer                  # number of integration nodes in solution path
     Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
-    dt::PhysicalScalar          # distance separating global integration nodes
+    n::MInteger                 # current node along a solution path
     # Arrays of length N+1 holding integrated variable rates at the global nodes
     f::ArrayOfPhysicalTensors   # array of integrated response function values
     g::ArrayOfPhysicalTensors   # array of integrated control function values
@@ -894,12 +897,12 @@ struct VolterraIntegralTensorEquation <: VolterraIntegralEquation
             t[n] = t[n-1] + d𝑡
         end
         f′ = ArrayOfPhysicalTensors(3N, 𝑓₀.matrix.rows, 𝑓₀.matrix.cols, 𝑓₀.units-d𝑡.units)
-        new(n, N, Nₘₐₓ, d𝑡, f, g, t, f′, 𝑐, 𝑊)
+        new(d𝑡, N, Nₘₐₓ, n, f, g, t, f′, 𝑐, 𝑊)
     end
 
     # Used by JSON3 whenever this data structure is to be created from a file.
-    function VolterraIntegralTensorEquation(n::MInteger, N::Integer, Nₘₐₓ::Integer, dt::PhysicalScalar, f::ArrayOfPhysicalTensors, g::ArrayOfPhysicalTensors, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalTensors, c::PhysicalScalar, W::ArrayOfPhysicalTensors)
-        new(n, N, Nₘₐₓ, dt, f, g, t, f′, c, W)
+    function VolterraIntegralTensorEquation(dt::PhysicalScalar, N::Integer, Nₘₐₓ::Integer, n::MInteger, f::ArrayOfPhysicalTensors, g::ArrayOfPhysicalTensors, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalTensors, c::PhysicalScalar, W::ArrayOfPhysicalTensors)
+        new(dt, N, Nₘₐₓ, n, f, g, t, f′, c, W)
     end
 end # VolterraIntegralTensorEquation
 

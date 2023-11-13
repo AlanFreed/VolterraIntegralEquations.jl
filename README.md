@@ -418,10 +418,10 @@ and they come in three flavors: for scalar equations, for vector equations, and 
 ```
 struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    n::MInteger                 # current node along a solution path
-    N::Integer                  # number of integration nodes in the solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
     dt::PhysicalScalar          # distance separating neighboring global integration nodes
+    N::Integer                  # number of integration nodes in a solution path
+    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    n::MInteger                 # current node along a solution path
     # Arrays of length N+1 holding integrated variable rates at the global nodes
     f::ArrayOfPhysicalScalars   # array of integrated response function values
     g::ArrayOfPhysicalScalars   # array of integrated control function values
@@ -446,10 +446,10 @@ function VolterraIntegralScalarEquation(systemOfUnits::String,
 ```
 wherein `f₀` and `g₀` are initial values for the response variable and the control variable, respectively, while the second constructor is
 ```
-function VolterraIntegralScalarEquation(n::MInteger, 
+function VolterraIntegralScalarEquation(dt::PhysicalScalar,
                                         N::Integer,
                                         Nₘₐₓ::Integer,
-                                        dt::PhysicalScalar,
+                                        n::MInteger, 
                                         f::ArrayOfPhysicalScalars,
                                         g::ArrayOfPhysicalScalars,
                                         t::ArrayOfPhysicalScalars,
@@ -463,10 +463,10 @@ The former is used to initially construct such a data structure, while the latte
 ```
 struct VolterraIntegralVectorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    n::MInteger                 # current node along a solution path
-    N::Integer                  # number of integration nodes in the solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
     dt::PhysicalScalar          # distance separating neighboring global integration nodes
+    N::Integer                  # number of integration nodes in a solution path
+    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    n::MInteger                 # current node along a solution path
     # Arrays of length N+1 holding integrated variable rates at the global nodes
     f::ArrayOfPhysicalVectors   # array of integrated response function values
     g::ArrayOfPhysicalVectors   # array of integrated control function values
@@ -491,10 +491,10 @@ function VolterraIntegralVectorEquation(systemOfUnits::String,
 ```
 wherein `f₀` and `g₀` are initial values for the response variable and the control variable, respectively, while the second constructor is
 ```
-function VolterraIntegralVectorEquation(n::MInteger, 
+function VolterraIntegralVectorEquation(dt::PhysicalScalar,
                                         N::Integer,
                                         Nₘₐₓ::Integer,
-                                        dt::PhysicalScalar,
+                                        n::MInteger, 
                                         f::ArrayOfPhysicalVectors,
                                         g::ArrayOfPhysicalVectors,
                                         t::ArrayOfPhysicalScalars,
@@ -508,10 +508,10 @@ The former is used to initially construct such a data structure, while the latte
 ```
 struct VolterraIntegralTensorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    n::MInteger                 # current node along a solution path
-    N::Integer                  # number of integration nodes in the solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
     dt::PhysicalScalar          # distance separating neighboring global integration nodes
+    N::Integer                  # number of integration nodes in a solution path
+    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    n::MInteger                 # current node along a solution path
     # Arrays of length N+1 holding integrated variable rates at the global nodes
     f::ArrayOfPhysicalTensors   # array of integrated response function values
     g::ArrayOfPhysicalTensors   # array of integrated control function values
@@ -536,10 +536,10 @@ function VolterraIntegralTensorEquation(systemOfUnits::String,
 ```
 wherein `f₀` and `g₀` are initial values for the response variable and the control variable, respectively, while the second constructor is
 ```
-function VolterraIntegralTensorEquation(n::MInteger,
+function VolterraIntegralTensorEquation(dt::PhysicalScalar,
                                         N::Integer,
                                         Nₘₐₓ::Integer,
-                                        dt::PhysicalScalar,
+                                        n::MInteger,
                                         f::ArrayOfPhysicalTensors,
                                         g::ArrayOfPhysicalTensors,
                                         t::ArrayOfPhysicalScalars,
@@ -617,3 +617,13 @@ where the tuple `g′ₙ` of control rates is to be refined via an iterative ste
 14) Young, A., "Approximate product integration," *Proceedings of the Royal Society, London*, **A-224** (1954), 552-561.
 
 15) Zener, C., *Elasticity and Anelasticity of Metals*. Chicago: University of Chicago Press, 1948.
+
+## Version History
+
+### Version 0.1.1
+
+Rearranged order of fields in the three viscoelastic data structures so that they conform with the order of other data structures used for solvers in this family of software.
+
+### Version 0.1.0
+
+Initial release.

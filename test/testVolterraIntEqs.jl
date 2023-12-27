@@ -11,6 +11,8 @@ export
     persistence
 
 function memoryFns(myDirPath::String)
+    N = 150
+
     # viscoelastic material constants for elastin
     ν   = PhysicalScalar(0.59, CGS_DIMENSIONLESS)
     τ_ϵ = PhysicalScalar(9.0E-4, CGS_SECOND)
@@ -43,16 +45,14 @@ function memoryFns(myDirPath::String)
     println("   τ₄ = ", toString(τ₄))
     println()
 
-    N = 150
-
     # Create the arrays to hold values for the memory function.
     reciprocalTime = PhysicalUnits("CGS", 0, 0, 0, -1, 0, 0, 0)
     # weakly singular kernels
-    arrayBOX = ArrayOfPhysicalScalars(N, reciprocalTime)
     arrayCCM = ArrayOfPhysicalScalars(N, reciprocalTime)
     arrayFLS = ArrayOfPhysicalScalars(N, reciprocalTime)
     arrayKWW = ArrayOfPhysicalScalars(N, reciprocalTime)
     # non-singular kernels
+    arrayBOX = ArrayOfPhysicalScalars(N+1, reciprocalTime)
     arrayMCM = ArrayOfPhysicalScalars(N, reciprocalTime)
     arrayMPL = ArrayOfPhysicalScalars(N+1, reciprocalTime)
     arrayRFS = ArrayOfPhysicalScalars(N+1, reciprocalTime)
@@ -61,37 +61,50 @@ function memoryFns(myDirPath::String)
     # Populate the memory function arrays
     time  = PhysicalScalar(CGS_SECOND)
     dTime = 3 * τ_ϵ / N
-    # arrayMCM[1] = MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
-    arrayMPL[1] = MPL("CGS", time, (α, τ_ϵ))
-    arrayRFS[1] = RFS("CGS", time, (α, δ, τ_ϵ))
-    arraySLS[1] = SLS("CGS", time, (τ_ϵ,))
+    (k, tau) = BOX("CGS", time, (τ_σ, τ_ϵ))
+    arrayBOX[1] = k
+    (k, tau) = MPL("CGS", time, (α, τ_ϵ))
+    arrayMPL[1] = k
+    (k, tau) = RFS("CGS", time, (α, δ, τ_ϵ))
+    arrayRFS[1] = k
+    (k, tau) = SLS("CGS", time, (τ_ϵ,))
+    arraySLS[1] = k
     for n in 1:N
         time = time + dTime
         # weakly singular kernels
-        arrayBOX[n] = BOX("CGS", time, (τ_σ, τ_ϵ))
-        arrayCCM[n] = CCM("CGS", time, (α, τ_ϵ))
-        arrayFLS[n] = FLS("CGS", time, (α, τ_ϵ))
-        arrayKWW[n] = KWW("CGS", time, (α, τ_ϵ))
+        (k, tau) = CCM("CGS", time, (α, τ_ϵ))
+        arrayCCM[n] = k
+        (k, tau) = FLS("CGS", time, (α, τ_ϵ))
+        arrayFLS[n] = k
+        (k, tau) = KWW("CGS", time, (α, τ_ϵ))
+        arrayKWW[n] = k
         # non-singular kernels
-        arrayMCM[n]   = MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
-        arrayMPL[n+1] = MPL("CGS", time, (α, τ_ϵ))
-        arrayRFS[n+1] = RFS("CGS", time, (α, δ, τ_ϵ))
-        arraySLS[n+1] = SLS("CGS", time, (τ_ϵ,))
+        (k, tau) = BOX("CGS", time, (τ_σ, τ_ϵ))
+        arrayBOX[n] = k
+        (k, tau) = MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
+        arrayMCM[n] = k
+        (k, tau) = MPL("CGS", time, (α, τ_ϵ))
+        arrayMPL[n+1] = k
+        (k, tau) = RFS("CGS", time, (α, δ, τ_ϵ))
+        arrayRFS[n+1] = k
+        (k, tau) = SLS("CGS", time, (τ_ϵ,))
+        arraySLS[n+1] = k
     end
 
     # Create the arrays for plotting.
     t₁  = zeros(Float64, N)
-    box = zeros(Float64, N)
     ccm = zeros(Float64, N)
     fls = zeros(Float64, N)
     kww = zeros(Float64, N)
     t₂  = zeros(Float64, N+1)
+    box = zeros(Float64, N+1)
     mcm = zeros(Float64, N)
     mpl = zeros(Float64, N+1)
     rfs = zeros(Float64, N+1)
     sls = zeros(Float64, N+1)
     set!(time, 0.0)
     t₂[1]  = get(time) / get(τ_ϵ)
+    box[1] = get(τ_ϵ) * get(arrayBOX[1])
     mcm[1] = get(τ_ϵ) * get(arrayMCM[1])
     mpl[1] = get(τ_ϵ) * get(arrayMPL[1])
     rfs[1] = get(τ_ϵ) * get(arrayRFS[1])
@@ -100,12 +113,12 @@ function memoryFns(myDirPath::String)
         # weakly singular kernels
         time   = time + dTime
         t₁[n]  = get(time) / get(τ_ϵ)
-        box[n] = get(τ_ϵ) * get(arrayBOX[n])
         ccm[n] = get(τ_ϵ) * get(arrayCCM[n])
         fls[n] = get(τ_ϵ) * get(arrayFLS[n])
         kww[n] = get(τ_ϵ) * get(arrayKWW[n])
         # non-singular kernels
         t₂[n+1]  = t₁[n]
+        box[n]   = get(τ_ϵ) * get(arrayBOX[n+1])
         mcm[n]   = get(τ_ϵ) * get(arrayMCM[n])
         mpl[n+1] = get(τ_ϵ) * get(arrayMPL[n+1])
         rfs[n+1] = get(τ_ϵ) * get(arrayRFS[n+1])
@@ -122,6 +135,11 @@ function memoryFns(myDirPath::String)
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
+    lines!(ax, t₂, box;
+        linewidth = 3,
+        linestyle = :solid,
+        color = :green,
+        label = "BOX")
     lines!(ax, t₁, mcm;
         linewidth = 3,
         linestyle = :solid,
@@ -156,11 +174,6 @@ function memoryFns(myDirPath::String)
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
-    lines!(ax, t₁, box;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :cyan,
-        label = "BOX")
     lines!(ax, t₁, ccm;
         linewidth = 3,
         linestyle = :solid,
@@ -181,34 +194,38 @@ function memoryFns(myDirPath::String)
     save(string(myDirPath, "memoryFnWeaklySingular.png"), fig)
 end # memoryFns
 
-function AbelKernel(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::PhysicalScalar
+function AbelKernel(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tuple
     kernel = 1 / sqrt(time)
-    return kernel
+    tau = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
+    return (kernel, tau)
 end # AbelKernel
 
 function Abel(myDirPath::String)
     CairoMakie.activate!(type = "png")
 
     # Solve an Abel integral equation: solution parameters.
-    t  = PhysicalScalar(6.082201995573399, DIMENSIONLESS) # upper limit of integration
-    c  = PhysicalScalar(1.0, DIMENSIONLESS)
-    f₀ = PhysicalScalar(DIMENSIONLESS)
-    g₀ = PhysicalScalar(DIMENSIONLESS)
+    t  = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
+    p  = ()
+    c  = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
+    f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
+    g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
 
     # Solve an Abel integral equation: 10 steps.
     N₁ = 10
+    Nₘₐₓ = 1000
+    sigFigs = 3
     dt₁ = t / N₁
-    W₁ = normalizedQuadratureWeights(AbelKernel, "SI", N₁, dt₁, ())
-    VIE₁ = VolterraIntegralScalarEquation("SI", N₁, dt₁, f₀, g₀, c, W₁)
+    W₁ = normalizedQuadratureWeights("SI", dt₁, p, AbelKernel, Nₘₐₓ, sigFigs)
+    g′ₙ = ArrayOfPhysicalScalars(3, CGS_DIMENSIONLESS)
+    VIE₁ = VolterraIntegralScalarEquation("SI", N₁, dt₁, f₀, g₀, W₁)
     for n in 1:N₁
         tₙ₁ = (1/6 + n - 1)*dt₁
         tₙ₂ = (1/2 + n - 1)*dt₁
         tₙ₃ = (5/6 + n - 1)*dt₁
-        g′ₙ₁ = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ₂ = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ₃ = π*tₙ₃/2 + sqrt(tₙ₃)
-        g′ₙ  = (g′ₙ₁, g′ₙ₂, g′ₙ₃)
-        advance!(VIE₁, g′ₙ)
+        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
+        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
+        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
+        advance!(VIE₁, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 10 steps.
@@ -239,17 +256,16 @@ function Abel(myDirPath::String)
     # Solve an Abel integral equation: 100 steps.
     N₂ = 100
     dt₂ = t / N₂
-    W₂ = normalizedQuadratureWeights(AbelKernel, "SI", N₂, dt₂, ())
-    VIE₂ = VolterraIntegralScalarEquation("SI", N₂, dt₂, f₀, g₀, c, W₂)
+    W₂ = normalizedQuadratureWeights("SI", dt₂, (), AbelKernel, Nₘₐₓ, sigFigs)
+    VIE₂ = VolterraIntegralScalarEquation("SI", N₂, dt₂, f₀, g₀, W₂)
     for n in 1:N₂
         tₙ₁ = (1/6 + n - 1)*dt₂
         tₙ₂ = (1/2 + n - 1)*dt₂
         tₙ₃ = (5/6 + n - 1)*dt₂
-        g′ₙ₁ = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ₂ = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ₃ = π*tₙ₃/2 + sqrt(tₙ₃)
-        g′ₙ  = (g′ₙ₁, g′ₙ₂, g′ₙ₃)
-        advance!(VIE₂, g′ₙ)
+        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
+        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
+        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
+        advance!(VIE₂, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 100 steps.
@@ -280,17 +296,16 @@ function Abel(myDirPath::String)
     # Solve an Abel integral equation: 1000 steps.
     N₃ = 1000
     dt₃ = t / N₃
-    W₃ = normalizedQuadratureWeights(AbelKernel, "SI", N₃, dt₃, ())
-    VIE₃ = VolterraIntegralScalarEquation("SI", N₃, dt₃, f₀, g₀, c, W₃)
+    W₃ = normalizedQuadratureWeights("SI", dt₃, (), AbelKernel, Nₘₐₓ, sigFigs)
+    VIE₃ = VolterraIntegralScalarEquation("SI", N₃, dt₃, f₀, g₀, W₃)
     for n in 1:N₃
         tₙ₁ = (1/6 + n - 1)*dt₃
         tₙ₂ = (1/2 + n - 1)*dt₃
         tₙ₃ = (5/6 + n - 1)*dt₃
-        g′ₙ₁ = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ₂ = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ₃ = π*tₙ₃/2 + sqrt(tₙ₃)
-        g′ₙ  = (g′ₙ₁, g′ₙ₂, g′ₙ₃)
-        advance!(VIE₃, g′ₙ)
+        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
+        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
+        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
+        advance!(VIE₃, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 1000 steps.
@@ -383,29 +398,32 @@ function persistence(myDirPath::String)
     CairoMakie.activate!(type = "png")
 
     # Solve an Abel integral equation: solution parameters.
-    t  = PhysicalScalar(6.082201995573399, DIMENSIONLESS) # upper limit of integration
-    c  = PhysicalScalar(1.0, DIMENSIONLESS)
-    f₀ = PhysicalScalar(DIMENSIONLESS)
-    g₀ = PhysicalScalar(DIMENSIONLESS)
+    t  = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
+    c  = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
+    f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
+    g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
 
     # Solve an Abel integral equation: 10 steps.
+    p = ()
     N₁ = 10
+    Nₘₐₓ = 1000
     dt₁ = t / N₁
-    W₁ = normalizedQuadratureWeights(AbelKernel, "SI", N₁, dt₁, ())
-    VIE₁ = VolterraIntegralScalarEquation("SI", N₁, dt₁, f₀, g₀, c, W₁)
+    sigFigs = 2
+    W₁ = normalizedQuadratureWeights("CGS", dt₁, p, AbelKernel, Nₘₐₓ, sigFigs)
+    g′ₙ = ArrayOfPhysicalScalars(3, CGS_DIMENSIONLESS)
+    VIE₁ = VolterraIntegralScalarEquation("CGS", N₁, dt₁, f₀, g₀, W₁)
     for n in 1:N₁
         tₙ₁ = (1/6 + n - 1)*dt₁
         tₙ₂ = (1/2 + n - 1)*dt₁
         tₙ₃ = (5/6 + n - 1)*dt₁
-        g′ₙ₁ = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ₂ = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ₃ = π*tₙ₃/2 + sqrt(tₙ₃)
-        g′ₙ  = (g′ₙ₁, g′ₙ₂, g′ₙ₃)
-        advance!(VIE₁, g′ₙ)
+        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
+        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
+        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
+        advance!(VIE₁, g′ₙ, c)
     end
 
     # Save this solution to file.
-    my_dir_path = string(myDirPath, "/test/files/")
+    my_dir_path = myDirPath
     json_stream = openJSONWriter(my_dir_path, "testAbelIntEq.json")
     VolterraIntegralEquations.toFile(VIE₁, json_stream)
     close(json_stream)

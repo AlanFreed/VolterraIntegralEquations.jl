@@ -731,7 +731,7 @@ struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
     f::ArrayOfPhysicalScalars   # array of integrated response function values
     g::ArrayOfPhysicalScalars   # array of integrated control function values
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervalS
+    # Array of length 3N holding response function rates at over local intervals
     f′::ArrayOfPhysicalScalars  # history array of response function rates
     # Array of Nₘₐₓ normalized weights of quadrature for a product integral
     W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
@@ -846,15 +846,15 @@ end
 
 # Solver for advancing a solution step-by-step.
 
-function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::ArrayOfPhysicalScalars)
     if vie.n > vie.N
         println("The Volterra integral solution has reached its endpoint.")
         return nothing
     end
 
     # verify inputs
-    if g′ₙ.array.len ≠ 3
-        msg = "The supplied control function rate g′ₙ must be of length 3."
+    if (g′ₙ.array.len ≠ 3) || (cₙ.array.len ≠ 3)
+        msg = "The control function g′ₙ and coefficient cₙ must be of lengths 3."
         throw(ErrorException(msg))
     end
     if g′ₙ.units ≠ vie.f′.units
@@ -898,7 +898,7 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
             f′[3] = vie.f′[3(m-1)+3]
             for i in 1:3
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ[i] * W[j,i] * f′[j]
                 end
             end
         end
@@ -911,7 +911,7 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
             f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
             for i in 1:3
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ[i] * W[j,i] * f′[j]
                 end
             end
         end
@@ -944,11 +944,9 @@ end # advance!
 # Perform an iteration of refinement on a solution at current step n. Call only
 # if the control function g′ₙ or coefficient cₙ undergo iterative refinement.
 
-function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::ArrayOfPhysicalScalars)
 
-    n = get(vie.n)
-    n = n - 1
-    set!(vie.n, n)
+    set!(vie.n, get(vie.n)-1)
     advance!(vie, g′ₙ, cₙ)
     return nothing
 end # update!
@@ -1082,7 +1080,7 @@ end
 
 # Solver for advancing a solution step-by-step.
 
-function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::ArrayOfPhysicalScalars)
     if vie.n > vie.N
         println("The Volterra integral solution has reached its endpoint.")
         return nothing
@@ -1095,16 +1093,16 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalV
         msg = string(msg, "   f′  has units ", PhysicalFields.toString(vie.f′.units))
         throw(ErrorException(msg))
     end
-    if g′ₙ.array.rows ≠ 3
-        msg = "The supplied control function rate g′ₙ must be of length 3."
+    if (g′ₙ.array.rows ≠ 3) || (cₙ.array.len ≠ 3)
+        msg = "The control function g′ₙ and coefficient cₙ must be of lengths 3."
         throw(ErrorException(msg))
     end
     if g′ₙ.array.cols ≠ vie.f′.array.cols
-        msg = "The length of vector rate g′ₙ must be of length vector vie.f′."
+        msg = "The length of each vector in g′ₙ must be of length vector vie.f′."
         throw(ErrorException(msg))
     end
     if !isDimensionless(cₙ)
-        msg = "Coefficient cₙ must be dimensionless scalar."
+        msg = "Coefficient cₙ must be dimensionless array of scalars."
         throw(ErrorException(msg))
     end
 
@@ -1138,7 +1136,7 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalV
             f′[3] = vie.f′[3(m-1)+3]
             for i in 1:3
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ[i] * W[j,i] * f′[j]
                 end
             end
         end
@@ -1151,7 +1149,7 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalV
             f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
             for i in 1:3
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ[i] * W[j,i] * f′[j]
                 end
             end
         end
@@ -1184,11 +1182,9 @@ end # advance!
 # Perform an iteration of refinement on a solution at current step n. Call only
 # if the control function g′ₙ or coefficient cₙ undergo iterative refinement.
 
-function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::ArrayOfPhysicalScalars)
 
-    n = get(vie.n)
-    n = n - 1
-    set!(vie.n, n)
+    set!(vie.n, get(vie.n)-1)
     advance!(vie, g′ₙ, cₙ)
     return nothing
 end # update!
@@ -1322,7 +1318,7 @@ end
 
 # Solver for advancing a solution step-by-step.
 
-function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::ArrayOfPhysicalScalars)
     if vie.n > vie.N
         println("The Volterra integral solution has reached its endpoint.")
         return nothing
@@ -1335,8 +1331,8 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalT
         msg = string(msg, "   f′  has units ", PhysicalFields.toString(vie.f′.units))
         throw(ErrorException(msg))
     end
-    if g′ₙ.array.pgs ≠ 3
-        msg = "The supplied control function rate g′ₙ must be of length 3."
+    if (g′ₙ.array.pgs ≠ 3) || (cₙ.array.len ≠ 3)
+        msg = "The control function g′ₙ and coefficient cₙ must be of lengths 3."
         throw(ErrorException(msg))
     end
     if (g′ₙ.array.rows ≠ vie.f′.array.rows) || (g′ₙ.array.cols ≠ vie.f′.array.cols)
@@ -1378,7 +1374,7 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalT
             f′[3] = vie.f′[3(m-1)+3]
             for i in 1:3
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ[i] * W[j,i] * f′[j]
                 end
             end
         end
@@ -1391,7 +1387,7 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalT
             f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
             for i in 1:3
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ[i] * W[j,i] * f′[j]
                 end
             end
         end
@@ -1424,11 +1420,9 @@ end # advance!
 # Perform an iteration of refinement on a solution at current step n. Call only
 # if the control function g′ₙ or coefficient cₙ undergo iterative refinement.
 
-function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::ArrayOfPhysicalScalars)
 
-    n = get(vie.n)
-    n = n - 1
-    set!(vie.n, n)
+    set!(vie.n, get(vie.n)-1)
     advance!(vie, g′ₙ, cₙ)
     return nothing
 end # update!

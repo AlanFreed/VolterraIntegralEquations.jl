@@ -22,39 +22,33 @@ Pkg.add(url = "https://github.com/AlanFreed/VolterraIntegralEquations.jl")
 
 This software was written to accompany a book the authors are writing [7].
 
-## Example: A Quasi-Linear Viscoelastic (QLV) Fiber
+## Example: A Viscoelastic Fiber
 
-A *linear* viscoelastic material describes the evolution of *stress* via a Volterra integral equation of the second kind expressed in terms of its rubbery and glassy elastic moduli. A *quasi-linear* viscoelastic material, in the terminology of Fung [9], on the other hand, describes the evolution of *stress rate* via a Volterra integral equation of the second kind expressed in terms of its rubbery and glassy elastic *tangent* moduli.
-
-A quasi-linear viscoelastic fiber can be modeled as a Volterra integral equation of the second kind, viz., [6]
+A linear viscoelastic fiber can be modeled as a Volterra integral equation of the second kind, viz., [6]
 $$
-\frac{\mathrm{d} \sigma}{\mathrm{d} t} =
-	E_0^{\,t} \, \frac{\mathrm{d} \epsilon}{\mathrm{d} t} -
-	\frac{E_0^{\,t} - E_{\infty}^{\,t}}{E_{\infty}^{\,t}}
+\frac{\mathrm{d} \sigma}{\mathrm{d} t} = \mathcal{E}(t) \left(
+	\frac{\mathrm{d} \epsilon}{\mathrm{d} t} -
+	\frac{E_0 - E_{\infty}}{E_0 \, E_{\infty}}
 	\int_0^t K (t - \tau) \, \frac{\mathrm{d} \sigma}{\mathrm{d}\tau} \,
-	\mathrm{d}\tau
+	\mathrm{d}\tau \right)
 $$
-where $\sigma$ is stress and $\epsilon$ is strain, and where $E_{\infty}^{\,t} \; (> 0)$ and $E_0^{\,t} \; (> E_{\infty}^{\,t})$ are its rubbery and glassy, elastic, tangent moduli, respectively, at time $t$, while $K$ is a positive, monotonic-decreasing kernel that represents a memory function whose units are reciprocal time.  The first term on the right-hand side provides a glassy elastic change in stress that is attenuated by the second term, which introduces a viscous loss to this change in stress.
+where $\sigma$ is stress and $\epsilon$ is strain, and where $\mathcal{E}$,  $E_{\infty}$, and $E_0$ are its local tangent, rubbery, and glassy elastic moduli, respectively, the former being a possible function of time, while the latter two are material constants. Kernel $K$ is a positive, monotonic-decreasing function known as a memory function whose units are reciprocal time.  The first term on the right-hand side of the above equation provides for a glassy elastic change in stress that is attenuated by the second term, which introduces a viscous loss to this change in stress.
 
-The elastic tangent moduli for a linear Hookean fiber come from their compliance
+The elastic tangent modulus $\mathcal{E}$ for a linear Hookean fiber is
 $$
-\frac{1}{E_0^{\,t}} = \frac{1}{E_0}
-\quad \text{and} \quad
-\frac{1}{E_{\infty}^{\,t}} = \frac{1}{E_{\infty}}
+\mathcal{E} = E_0
 $$
-wherein $E_0$ denotes its glassy modulus, and $E_{\infty}$ denotes its rubbery modulus. For a Hookean material, there is no difference between its elastic moduli and its elastic tangent moduli. 
+wherein $E_0$ denotes its glassy modulus.
 
-In contrast, for a nonlinear biologic fiber, its glassy and rubbery tangent moduli associate with compliance functions
+In contrast, for a nonlinear biologic fiber, its tangent modulus associates with a nonlinear compliance of
 $$
-\frac{1}{E_0^{\,t}} = \frac{1}{E_0} + \frac{\beta + (\sigma - \sigma_r) / E_0 - \epsilon}{\beta E_r + 2(\sigma - \sigma_r)}
-\quad \text{and} \quad
-\frac{1}{E_{\infty}^{\,t}} = \frac{1}{E_{\infty}} + \frac{\beta + (\sigma - \sigma_r) / E_{\infty} - \epsilon}{\beta E_r + 2(\sigma - \sigma_r)}
+\frac{1}{\mathcal{E}} = \frac{1}{E_0} + \frac{\beta}{E_r \beta + 2(\sigma - \sigma_r)} \sqrt{\frac{\beta E_r}{\beta E_r + 2(\sigma - \sigma_r)}}
 $$
-wherein $\sigma_r$ denotes a residual stress, and $\beta$ designates a limiting state for an internal strain, a strain caused by molecular reconfiguration.  The elastic tangent modulus associated with a fiber's strain-free reference configuration is designated as $E_r$ ($> 0$). While within a biologic fiber's linear region of response, wherein strain is caused by molecular stretching, moduli $E_\infty$ ($> E_r$) and $E_0$ ($> E_{\infty}$) denote its rubbery and glassy moduli, respectively.
+wherein $\sigma_r$ denotes a residual stress, and $\beta$ designates a limiting state for an internal strain, a strain caused by molecular reconfiguration.  The elastic tangent modulus associated with a fiber's strain-free reference configuration is designated as $E_r$ ($> 0$). Within a biologic fiber's linear region of response, wherein strain is caused by molecular stretching, moduli $E_\infty$ ($> E_r$) and $E_0$ ($> E_{\infty}$) denote its rubbery and glassy moduli, respectively. The resulting elastic tangent modulus $\mathcal{E}$ is thereby bounded by $E_r$ from below and $E_0$ from above.
 
 ### Volterra Functions
 
-For a quasi-linear viscoelastic fiber, the unknown forcing function to be ascertained is a stress rate, viz.,
+For a viscoelastic fiber, the unknown forcing function to be ascertained is a stress rate, viz.,
 $$
 f^{\prime}(t) = \frac{\mathrm{d} \sigma}{\mathrm{d} t}
 $$
@@ -63,16 +57,14 @@ that is to be solved for in terms of:
 $$
 c(t) \, K(t-\tau) 
 \quad \text{has coefficient} \quad 
-c(t) = \frac{E_0^{\,t} - E_{\infty}^{\,t}}{E_{\infty}^{\,t}}
+c(t) = \mathcal{E}(t) \, \frac{E_0 - E_{\infty}}{E_0 \, E_{\infty}}
 $$
 resulting in a modulus-scaled memory function, and 
 2) a known control function
 $$
-g^{\prime}(t) = E_0^{\,t} \, \frac{\mathrm{d}\epsilon}{\mathrm{d}t}
+g^{\prime}(t) = \mathcal{E}(t) \, \frac{\mathrm{d}\epsilon}{\mathrm{d}t}
 $$
 which is a modulus-scaled strain rate.
-
-For linear models, coefficient $c$ is a constant. For quasi-linear models, coefficient $c$ is a function.
 
 ## Memory Functions
 
@@ -222,16 +214,26 @@ In practice, it is considered that the global interval of integration $\mathrm{d
 
 Solutions to Volterra integral equations of the second kind take on the form of a sequentially solved linear equation
 $$
-\boldsymbol{f}^{\prime}_{n} = \Bigl( \boldsymbol{I} + c(t_n) \, \boldsymbol{W}^{\mathsf{T}}_{\!1} \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c(t_n) \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{\!n-m+1} \boldsymbol{f}^{\prime}_{m} \right) ,
+\boldsymbol{f}^{\prime}_{n} = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_{\!1} \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{\!n-m+1} \boldsymbol{f}^{\prime}_{m} \right) ,
 \qquad n = 1, 2, \ldots, N
 $$
-where $N$ specifies the number of global integration steps, called nodes, that are required to traverse a solution's path, whose weights of quadrature are $\boldsymbol{W}_n$, with weight $\boldsymbol{W}_1$ being distinct in form from all the others. In order for this algorithm to work, it is necessary that the $J \times J$ matrix $\boldsymbol{I} + c(t_n) \, \boldsymbol{W}_1^{\mathsf{T}}$ not be singular so that its inverse exists. 
+where $N$ specifies the number of global integration steps, called nodes, that are required to traverse a solution's path, whose weights of quadrature are $\boldsymbol{W}_n$, with weight $\boldsymbol{W}_1$ being distinct in form from all the others. In order for this algorithm to work, it is necessary that the $J \times J$ matrix $\boldsymbol{I} + c_n \boldsymbol{W}_1^{\mathsf{T}}$ not be singular so that its inverse exists. 
 
-For the method implemented here, there are three local nodes of integration per single global node, i.e., $J = 3$, and as such, the control function $\boldsymbol{g}^{\prime}_n$ and the forcing function $\boldsymbol{f}^{\prime}_n$ are both vectors of length 3, while the weights of quadrature $\boldsymbol{W}_n$ are $3 \times 3$ matrices. Specifically, a mid-point quadrature rule is selected wherein
+For the method implemented here, there are three local nodes of integration per single global node, i.e., $J = 3$, and as such, the control function $\boldsymbol{g}^{\prime}_n$, the forcing function $\boldsymbol{f}^{\prime}_n$, and the coefficient $c_n$ are each arrays of length 3, while the weights of quadrature $\boldsymbol{W}_n$ are $3 \times 3$ matrices. Specifically, an open, mid-point, quadrature rule is selected wherein
 $$
 t_j = \{ \tfrac{1}{6} \mathrm{d}t , \tfrac{1}{2} \mathrm{d}t , \tfrac{5}{6} \mathrm{d}t \}
 $$
 so that
+$$
+c_n = \left\{ \begin{matrix}
+c(t_{n,1}) \\ c(t_{n,2}) \\ c(t_{n,3}) \\
+\end{matrix} \right\}
+= \left\{ \begin{matrix}
+c(t_{n-1} \! + \! \tfrac{1}{6} \mathrm{d}t) \\
+c(t_{n-1} \! + \! \tfrac{1}{2} \mathrm{d}t) \\
+c(t_{n-1} \! + \! \tfrac{5}{6} \mathrm{d}t) \\
+\end{matrix} \right\}
+$$
 $$
 \boldsymbol{f}^{\prime}_n = \left\{ \begin{matrix}
 \boldsymbol{f}^{\prime}(t_{n,1}) \\
@@ -243,7 +245,9 @@ $$
 \boldsymbol{f}^{\prime}(t_{n-1} \! + \! \tfrac{1}{2} \mathrm{d}t) \\
 \boldsymbol{f}^{\prime}(t_{n-1} \! + \! \tfrac{5}{6} \mathrm{d}t) \\
 \end{matrix} \right\}
-\quad \text{and} \quad
+$$
+and
+$$
 \boldsymbol{g}^{\prime}_n = \left\{ \begin{matrix}
 \boldsymbol{g}^{\prime}(t_{n,1}) \\
 \boldsymbol{g}^{\prime}(t_{n,2}) \\
@@ -278,7 +282,7 @@ The global nodes of integration associate with times $t_n$ where $t_n = t_{n-1} 
 
 ### Moment Matrices
 
-The greatest expense in implementing this numerical method is in computing its moment matrices. Fortunately, once gotten they can be reused in future solutions. There is a more efficient algorithm for implementing an exponential kernel that is based upon its recursive property [6], but that algorithm is restricted to that kernel alone. The algorithm presented below is applicable to all types of kernel functions, and is therefore versatile.
+The greatest expense in implementing this numerical method is often in the computing its moment matrices. Fortunately, once gotten they can be reused in future solutions. There is a more efficient algorithm for implementing an exponential kernel that is based upon its recursive property [6], but that algorithm is restricted to that kernel alone. The algorithm presented below is applicable to all types of kernel functions, and is therefore versatile.
 
 The moment matrices are solutions to integral equations. For $n=1$, moment $\boldsymbol{\mu}_1$ describes a $3 \times 3$ matrix whose elements are solutions to the integral equation
 $$
@@ -352,11 +356,11 @@ that collectively weigh an effect caused by the moment arms within a Taylor expa
 
 For those kernels $K$ that are monotonic-decreasing functions, a number $N_{\max}$ exists beyond which point memory of the past effectively fades away. How one assigns $N_{\max}$ will depend upon the kernel $K$ (specifically, its characteristic time), the global step size $\mathrm{d}t$, and the accuracy sought in a solution. Considering that such an $N_{\max}$ exists, then, for integration steps where $n \le N_{\max}$, a solution $\boldsymbol{f}^{\prime}_n$ advances along its path according to the linear equation
 $$
-\boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c(t_n) \, \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c(t_n) \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{n-m+1} \boldsymbol{f}^{\prime}_{m} \right)
+\boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{n-m+1} \boldsymbol{f}^{\prime}_{m} \right)
 $$
-that when $n > N_{\max}$ it continues to advance along its path, but now according to the linear equation
+that whenever $n > N_{\max}$ will continue to advance along its path, but now according to the linear equation
 $$
-\boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c(t_n) \, \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c(t_n) \sum_{m=1}^{N_{\max}-1} \boldsymbol{W}^{\mathsf{T}}_{N_{\max}-m+1} \boldsymbol{f}^{\prime}_{m+n-N_{\max}} \right)
+\boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{N_{\max}-1} \boldsymbol{W}^{\mathsf{T}}_{N_{\max}-m+1} \boldsymbol{f}^{\prime}_{m+n-N_{\max}} \right)
 $$
 which removes forcing functions from $\boldsymbol{f}^{\prime}_1$ through $\boldsymbol{f}^{\prime}_{n-N_{\max}}$ from its summation history. These memories are so distant that they have effectively been forgotten.
 
@@ -437,7 +441,7 @@ function normalizedQuadratureWeights(systemOfUnits::String,
                                      significantFigures::Integer=5)::ArrayOfPhysicalTensors
 
 ```
-where the `kernel` is any of the eight memory functions addressed above, or one of your own design. This function is called internally, whose arguments include `systemOfUnits` and `parameters,` with its argument for `time` being an integer multiple of step size `dTime,` which is the global time-step size of the solver. The returned quadrature weights are contained within an instance of type `PhysicalFields.ArrayOfPhysicalTensors` whose length is the lesser value of `Nₘₐₓ` and that length determined from the characteristic time $\tau$ supplied by the `kernel` at the accuracy sought. This is established via argument `significantFigues,` which is bound to the integer interval [2, 10] with 5 being its default value. For example, at this default, the array of quadrature weights will have a length of $\min (N_{\text{max}}, N_t)$ where $N_t$ is that value whereat $K(N_t \, \mathrm{d}t) < 10^{-5}$.
+where the `kernel` is any of the eight memory functions addressed above, or one of your own design. This function is called internally, whose arguments include `systemOfUnits` and `parameters,` with its argument for `time` being an integer multiple of step size `dTime,` which is the global time-step size of the solver. The returned quadrature weights are contained within an instance of type `PhysicalFields.ArrayOfPhysicalTensors` whose length is the lesser value of `Nₘₐₓ` and that length determined from the characteristic time $\tau$ supplied by the `kernel` at the accuracy sought. This is established via argument `significantFigues,` which is bound to the integer interval [3, 9] with 5 being its default value. For example, at this default, the array of quadrature weights will have a length of $\min (N_{\text{max}}, N_t)$ where $N_t$ is that value whereat $K(N_t \, \mathrm{d}t) < 10^{-5}$.
 
 The returned quadrature weights are of type `PhysicalFields.ArrayOfPhysicalTensors,` and as such, they can be stored to a JSON file for a later retrieval. 
 
@@ -526,15 +530,15 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::ArrayOfPhysicalScalars)
 ```
-wherein `vie` is an instance of type `VolterraIntegralScalarEquation.` Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$. Argument `cₙ` contains the scalar coefficient operating on the integral, viz., for our viscoelastic models, $c_n = (E_0^{\,t_n} - E_{\infty}^{\,t_n}) / E_{\infty}^{\,t_n}$ wherein $E_0^{\,t_n}$ and $E_{\infty}^{\,t_n}$ are the glassy and rubbery, tangent moduli evaluated at time $t_n$.
+wherein `vie` is an instance of type `VolterraIntegralScalarEquation.` Arguments `cₙ` and `g′ₙ` are arrays of length 3 that contain the coefficients and rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::ArrayOfPhysicalScalars)
 ```
-where the array `g′ₙ` of control rates and/or the scalar coefficient `cₙ` are to be refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the control rates `g′ₙ` and coefficient `cₙ` are known explicitly.
+where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coefficients and rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
 
 ## For Vector Equations:
 
@@ -613,15 +617,15 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::ArrayOfPhysicalScalars)
 ```
-wherein `vie` is an instance of type `VolterraIntegralVectorEquation.` Argument `g′ₙ` is an array of vectors of length 3 that contains rates for the control vector at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$. Argument `cₙ` contains the scalar coefficient operating on the integral, viz., for our viscoelastic models, $c_n = (E_0^{\,t_n} - E_{\infty}^{\,t_n}) / E_{\infty}^{\,t_n}$ wherein $E_0^{\,t_n}$ and $E_{\infty}^{\,t_n}$ are the glassy and rubbery, tangent moduli evaluated at time $t_n$.
+wherein `vie` is an instance of type `VolterraIntegralVectorEquation.` Arguments `cₙ` and `g′ₙ` are arrays of length 3 that contain the coefficients and rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::ArrayOfPhysicalScalars)
 ```
-where the array `g′ₙ` of control rates and/or the scalar coefficient `cₙ` are to be refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the control rates `g′ₙ` and coefficient `cₙ` are known explicitly.
+where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coefficients and rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
 
 ## For Tensor Equations:
 
@@ -700,15 +704,15 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::ArrayOfPhysicalScalars)
 ```
-wherein `vie` is an instance of type `VolterraIntegralTensorEquation.` Argument `g′ₙ` is an array of tensors of length 3 that contains rates for the control tensor at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$. Argument `cₙ` contains the scalar coefficient operating on the integral, viz., for our viscoelastic models, $c_n = (E_0^{\,t_n} - E_{\infty}^{\,t_n}) / E_{\infty}^{\,t_n}$ wherein $E_0^{\,t_n}$ and $E_{\infty}^{\,t_n}$ are the glassy and rubbery, tangent moduli evaluated at time $t_n$.
+wherein `vie` is an instance of type `VolterraIntegralTensorEquation.`  Arguments `cₙ` and `g′ₙ` are arrays of length 3 that contain the coefficients and rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::ArrayOfPhysicalScalars)
 ```
-where the array `g′ₙ` of control rates and/or the scalar coefficient `cₙ` are to be refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the control rates `g′ₙ` and coefficient `cₙ` are known explicitly.
+where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coefficients and rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
 
 ## References
 
@@ -747,6 +751,10 @@ where the array `g′ₙ` of control rates and/or the scalar coefficient `cₙ` 
 17) Zener, C., *Elasticity and Anelasticity of Metals*. Chicago: University of Chicago Press, 1948.
 
 ## Version History
+
+### Version 0.1.3
+
+The coefficient `cₙ` multiplying the Volterra integral, like forcing function `g′ₙ,` is now an array of length 3, thereby allowing its value to differ between the three local nodes of quadrature.
 
 ### Version 0.1.2
 

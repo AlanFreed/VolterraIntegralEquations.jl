@@ -127,7 +127,7 @@ function memoryFns(myDirPath::String)
 
     # Plot the non-singular kernels.
 
-    fig = Figure(resolution = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax = Axis(fig[1, 1];
         xlabel = "time ÷ characteristic time  (t / τ_ϵ)",
         ylabel = "characteristic time × memory function  (τ_ϵ × k)",
@@ -166,7 +166,7 @@ function memoryFns(myDirPath::String)
 
     # Plot the weakly singular kernels.
 
-    fig = Figure(resolution = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax = Axis(fig[1, 1];
         xlabel = "time ÷ characteristic time  (t / τ_ϵ)",
         ylabel = "characteristic time × memory function  (τ_ϵ × k)",
@@ -204,9 +204,12 @@ function Abel(myDirPath::String)
     CairoMakie.activate!(type = "png")
 
     # Solve an Abel integral equation: solution parameters.
-    t  = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
-    p  = ()
-    c  = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
+    t = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
+    p = ()
+    c = ArrayOfPhysicalScalars(3, CGS_DIMENSIONLESS)
+    for i in 1:3
+        c[i] = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
+    end
     f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
     g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
 
@@ -333,7 +336,7 @@ function Abel(myDirPath::String)
         end
     end
 
-    fig = Figure(resolution = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax = Axis(fig[1, 1];
         xlabel = "Upper Limit of Integration, 𝑥",
         ylabel = "Logarithm of Solution Error, ϵ",
@@ -361,7 +364,7 @@ function Abel(myDirPath::String)
         position = :rc)
     save(string(myDirPath, "AbelVIEerror.png"), fig)
 
-    fig = Figure(resolution = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax = Axis(fig[1, 1];
         xlabel = "Upper Limit of Integration, 𝑥",
         ylabel = "Solution, 𝑓(𝑥)",
@@ -447,7 +450,7 @@ function persistence(myDirPath::String)
         y₂[n] = get(soln)
     end
 
-    fig = Figure(resolution = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax = Axis(fig[1, 1];
         xlabel = "Upper Limit of Integration, 𝑥",
         ylabel = "Solution, 𝑓(𝑥)",

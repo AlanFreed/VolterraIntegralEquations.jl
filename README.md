@@ -56,7 +56,7 @@ that is to be solved for in terms of:
 1) a known kernel function and its coefficient
 $$
 c(t) \, K(t-\tau) 
-\quad \text{has coefficient} \quad 
+\quad \text{with coefficient} \quad 
 c(t) = \mathcal{E}(t) \, \frac{E_0 - E_{\infty}}{E_0 \, E_{\infty}}
 $$
 resulting in a modulus-scaled memory function, and 
@@ -187,7 +187,7 @@ $$
 $$
 \vdots
 $$
-wherein, e.g., the product integral $\int_{0}^{t_1} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time $t_2$ lies outside the interval of integration, in this case $[0, t_1]$, over which time $\tau$ spans, while the product integral $\int_{t_1}^{t_2} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time, in this case $t_2$, is now the upper limit of integration. These two integrals will have different rules of quadratures representing them.
+wherein, e.g., the product integral $\int_{0}^{t_1} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time $t_2$ lies outside the interval of integration, in this case $[0, t_1]$, over which time $\tau$ spans, while the product integral $\int_{t_1}^{t_2} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time, in this case $t_2$, is now the upper limit of integration. These two integrals will have different rules of quadrature representing them.
 
 ### Quadrature Rule
 
@@ -217,23 +217,13 @@ $$
 \boldsymbol{f}^{\prime}_{n} = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_{\!1} \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{\!n-m+1} \boldsymbol{f}^{\prime}_{m} \right) ,
 \qquad n = 1, 2, \ldots, N
 $$
-where $N$ specifies the number of global integration steps, called nodes, that are required to traverse a solution's path, whose weights of quadrature are $\boldsymbol{W}_n$, with weight $\boldsymbol{W}_1$ being distinct in form from all the others. In order for this algorithm to work, it is necessary that the $J \times J$ matrix $\boldsymbol{I} + c_n \boldsymbol{W}_1^{\mathsf{T}}$ not be singular so that its inverse exists. 
+where $N$ specifies the number of global integration steps, called nodes, that are required to traverse a solution's path, whose weights of quadrature are $\boldsymbol{W}_n$, with weight $\boldsymbol{W}_1$ being distinct in form from all the others. In order for this algorithm to work, it is necessary that the $J \times J$ matrix $\boldsymbol{I} + c_n \boldsymbol{W}_1^{\mathsf{T}}$ not be singular so that its inverse exists, with $c_n = c(t_n)$. 
 
-For the method implemented here, there are three local nodes of integration per single global node, i.e., $J = 3$, and as such, the control function $\boldsymbol{g}^{\prime}_n$, the forcing function $\boldsymbol{f}^{\prime}_n$, and the coefficient $c_n$ are each arrays of length 3, while the weights of quadrature $\boldsymbol{W}_n$ are $3 \times 3$ matrices. Specifically, an open, mid-point, quadrature rule is selected wherein
+For the method implemented here, there are three local nodes of integration per single global node, i.e., $J = 3$, and as such, the control function $\boldsymbol{g}^{\prime}_n$ and the forcing function $\boldsymbol{f}^{\prime}_n$ are each arrays of length 3, while the weights of quadrature $\boldsymbol{W}_n$ are $3 \times 3$ matrices. Specifically, an open, mid-point, quadrature rule is selected wherein
 $$
 t_j = \{ \tfrac{1}{6} \mathrm{d}t , \tfrac{1}{2} \mathrm{d}t , \tfrac{5}{6} \mathrm{d}t \}
 $$
 so that
-$$
-c_n = \left\{ \begin{matrix}
-c(t_{n,1}) \\ c(t_{n,2}) \\ c(t_{n,3}) \\
-\end{matrix} \right\}
-= \left\{ \begin{matrix}
-c(t_{n-1} \! + \! \tfrac{1}{6} \mathrm{d}t) \\
-c(t_{n-1} \! + \! \tfrac{1}{2} \mathrm{d}t) \\
-c(t_{n-1} \! + \! \tfrac{5}{6} \mathrm{d}t) \\
-\end{matrix} \right\}
-$$
 $$
 \boldsymbol{f}^{\prime}_n = \left\{ \begin{matrix}
 \boldsymbol{f}^{\prime}(t_{n,1}) \\
@@ -278,17 +268,17 @@ $$
 $$
 where $\boldsymbol{X}$ is a Vandermonde matrix (Young [16] calls it the alternant matrix) and $\boldsymbol{\mu}_n$ is the $n^{\text{th}}$ moment matrix, which are consequences of expressing $\boldsymbol{f}^{\prime}$ in a Taylor series expanded about the midpoint to its local span of integration.
 
-The global nodes of integration associate with times $t_n$ where $t_n = t_{n-1} + \mathrm{d}t \; \forall \; n$ given $t_0 = 0$, with $\mathrm{d}t$ being a distance separating neighboring global nodes. The local nodes of integration associate with times $t_{n,j}$ where $j = 1,2,3$ and where $t_{n,1} = t_{n-1} + \tfrac{1}{6} \mathrm{d}t$, $t_{n,2} = t_{n-1} + \tfrac{1}{2} \mathrm{d}t$ and $t_{n,3} = t_{n-1} + \tfrac{5}{6} \mathrm{d}t$, with a distance of $\tfrac{1}{3} \mathrm{d}t$ separating neighboring local nodes. These local nodes do not contain any global nodes, i.e., it uses an open quadrature method. Consequently, this solution strategy can, in principle, be applied to kernels that are singular at the upper limit of integration (like memory kernels: CCM, FLS and KWW).
+The global nodes of integration associate with times $t_n$ where $t_n = t_{n-1} + \mathrm{d}t \; \forall \; n$ given $t_0 = 0$, with $\mathrm{d}t$ being a distance separating neighboring global nodes. The local nodes of integration associate with times $t_{n,j}$ where $j = 1,2,3$ such that $t_{n,1} = t_{n-1} + \tfrac{1}{6} \mathrm{d}t$, $t_{n,2} = t_{n-1} + \tfrac{1}{2} \mathrm{d}t$ and $t_{n,3} = t_{n-1} + \tfrac{5}{6} \mathrm{d}t$, with a distance of $\tfrac{1}{3} \mathrm{d}t$ separating neighboring local nodes. These local nodes do not contain any global nodes, i.e., it uses an open quadrature method. Consequently, this solution strategy can, in principle, be applied to kernels that are singular at the upper limit of integration (like memory kernels: CCM, FLS and KWW).
 
 ### Moment Matrices
 
 The greatest expense in implementing this numerical method is often in the computing its moment matrices. Fortunately, once gotten they can be reused in future solutions. There is a more efficient algorithm for implementing an exponential kernel that is based upon its recursive property [6], but that algorithm is restricted to that kernel alone. The algorithm presented below is applicable to all types of kernel functions, and is therefore versatile.
 
-The moment matrices are solutions to integral equations. For $n=1$, moment $\boldsymbol{\mu}_1$ describes a $3 \times 3$ matrix whose elements are solutions to the integral equation
+The moment matrices are solutions to integral equations. For $n=1$, moment $\boldsymbol{\mu}_1$ describes a $3 \times 3$ matrix whose elements are solutions to the Volterra integral
 $$
 \mu_{ij,1} = \frac{1}{h^{i-1}} \int_0^{(j - 1/2)h} \bigl( \tau - \tfrac{1}{2} (j - 1/2) h \bigr)^{i-1} \, K \bigl( (j - 1/2) h - \tau \bigr) \, \mathrm{d} \tau
 $$
-where $h = \tfrac{1}{3} \mathrm{d}t$ and $i,j=1,2,3$. The remaining moment matrices $\boldsymbol{\mu}_n$, where $n=2, 3, \ldots, N$, describe $3 \times 3$ matrices whose elements are solutions to the integral equation
+where $h = \tfrac{1}{3} \mathrm{d}t$ and $i,j=1,2,3$. The remaining moment matrices $\boldsymbol{\mu}_n$, where $n=2, 3, \ldots, N$, describe $3 \times 3$ matrices whose elements are solutions to the Fredholm integral
 $$
 \mu_{ij,n} = \frac{1}{h^{i-1}} \int_0^{\mathrm{d}t} \bigl( \tau - \tfrac{1}{2} \mathrm{d}t \bigr)^{i-1} \, K \bigl( (n-1) \mathrm{d}t + (j - 1/2) h - \tau \bigr) \, \mathrm{d} \tau
 $$
@@ -530,15 +520,15 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::ArrayOfPhysicalScalars)
+function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
 ```
-wherein `vie` is an instance of type `VolterraIntegralScalarEquation.` Arguments `cₙ` and `g′ₙ` are arrays of length 3 that contain the coefficients and rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$.
+wherein `vie` is an instance of type `VolterraIntegralScalarEquation.` Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$, while argument `cₙ` is a scalar field.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::ArrayOfPhysicalScalars)
+function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
 ```
-where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coefficients and rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
+where array `g′ₙ` is of length 3 containing rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
 
 ## For Vector Equations:
 
@@ -617,15 +607,15 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::ArrayOfPhysicalScalars)
+function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
 ```
-wherein `vie` is an instance of type `VolterraIntegralVectorEquation.` Arguments `cₙ` and `g′ₙ` are arrays of length 3 that contain the coefficients and rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$.
+wherein `vie` is an instance of type `VolterraIntegralVectorEquation.` Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$, while argument `cₙ` is a scalar field.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::ArrayOfPhysicalScalars)
+function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
 ```
-where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coefficients and rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
+where array `g′ₙ` is of length 3 containing rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
 
 ## For Tensor Equations:
 
@@ -704,15 +694,16 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::ArrayOfPhysicalScalars)
+function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
 ```
-wherein `vie` is an instance of type `VolterraIntegralTensorEquation.`  Arguments `cₙ` and `g′ₙ` are arrays of length 3 that contain the coefficients and rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$.
+wherein `vie` is an instance of type `VolterraIntegralTensorEquation.`  Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$, while argument `cₙ` is a scalar field.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::ArrayOfPhysicalScalars)
+function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
 ```
-where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coefficients and rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
+where array `g′ₙ` is of length 3 containing rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
+
 
 ## References
 
@@ -754,7 +745,7 @@ where the arrays `cₙ` and `g′ₙ` are of length 3, which contain the coeffic
 
 ### Version 0.1.3
 
-The coefficient `cₙ` multiplying the Volterra integral, like forcing function `g′ₙ,` is now an array of length 3, thereby allowing its value to differ between the three local nodes of quadrature.
+Bug fixes.
 
 ### Version 0.1.2
 

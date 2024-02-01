@@ -206,10 +206,7 @@ function Abel(myDirPath::String)
     # Solve an Abel integral equation: solution parameters.
     t = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
     p = ()
-    c = ArrayOfPhysicalScalars(3, CGS_DIMENSIONLESS)
-    for i in 1:3
-        c[i] = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
-    end
+    c = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
     f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
     g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
 

@@ -1,6 +1,6 @@
 #=
 Created on Tue 27 Jun 2023
-Updated on Thr 01 Feb 2024
+Updated on Wed 14 Feb 2024
 =#
 
 #=
@@ -803,6 +803,8 @@ function Base.:(copy)(vie::VolterraIntegralScalarEquation)::VolterraIntegralScal
     N    = copy(vie.N)
     Nₘₐₓ = copy(vie.Nₘₐₓ)
     n    = copy(vie.n)
+    f    = copy(vie.f)
+    g    = copy(vie.g)
     t    = copy(vie.t)
     f′   = copy(vie.f′)
     W    = copy(vie.W)
@@ -814,6 +816,8 @@ function Base.:(deepcopy)(vie::VolterraIntegralScalarEquation)::VolterraIntegral
     N    = deepcopy(vie.N)
     Nₘₐₓ = deepcopy(vie.Nₘₐₓ)
     n    = deepcopy(vie.n)
+    f    = deepcopy(vie.f)
+    g    = deepcopy(vie.g)
     t    = deepcopy(vie.t)
     f′   = deepcopy(vie.f′)
     W    = deepcopy(vie.W)

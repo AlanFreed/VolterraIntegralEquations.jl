@@ -3,7 +3,7 @@ module testVolterraIntEqs
 using
     CairoMakie,       # Pixel based figure construction.
     PhysicalFields,
-    ..VolterraIntegralEquations
+    VolterraIntegralEquations
 
 export
     Abel,
@@ -127,71 +127,71 @@ function memoryFns(myDirPath::String)
 
     # Plot the non-singular kernels.
 
-    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax = Axis(fig[1, 1];
+    fig1 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax1 = Axis(fig1[1, 1];
         xlabel = "time ÷ characteristic time  (t / τ_ϵ)",
         ylabel = "characteristic time × memory function  (τ_ϵ × k)",
         title = "Non-singular Memory Functions for Elastin",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
-    lines!(ax, t₂, box;
+    lines!(ax1, t₂, box;
         linewidth = 3,
         linestyle = :solid,
         color = :green,
         label = "BOX")
-    lines!(ax, t₁, mcm;
+    lines!(ax1, t₁, mcm;
         linewidth = 3,
         linestyle = :solid,
         color = :cyan,
         label = "MCM")
-    lines!(ax, t₂, mpl;
+    lines!(ax1, t₂, mpl;
         linewidth = 3,
         linestyle = :solid,
         color = :blue,
         label = "MPL")
-    lines!(ax, t₂, rfs;
+    lines!(ax1, t₂, rfs;
         linewidth = 3,
         linestyle = :solid,
         color = :red,
         label = "RFS")
-    lines!(ax, t₂, sls;
+    lines!(ax1, t₂, sls;
         linewidth = 3,
         linestyle = :solid,
         color = :black,
         label = "SLS")
     axislegend("Function",
         position = :rt)
-    save(string(myDirPath, "memoryFnNonSingular.png"), fig)
+    save(string(myDirPath, "memoryFnNonSingular.png"), fig1)
 
     # Plot the weakly singular kernels.
 
-    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax = Axis(fig[1, 1];
+    fig2 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax2 = Axis(fig2[1, 1];
         xlabel = "time ÷ characteristic time  (t / τ_ϵ)",
         ylabel = "characteristic time × memory function  (τ_ϵ × k)",
         title = "Weakly-singular Memory Functions for Elastin",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
-    lines!(ax, t₁, ccm;
+    lines!(ax2, t₁, ccm;
         linewidth = 3,
         linestyle = :solid,
         color = :blue,
         label = "CCM")
-    lines!(ax, t₁, fls;
+    lines!(ax2, t₁, fls;
         linewidth = 3,
         linestyle = :solid,
         color = :red,
         label = "FLS")
-    lines!(ax, t₁, kww;
+    lines!(ax2, t₁, kww;
         linewidth = 3,
         linestyle = :solid,
         color = :black,
         label = "KWW")
     axislegend("Function",
         position = :rt)
-    save(string(myDirPath, "memoryFnWeaklySingular.png"), fig)
+    save(string(myDirPath, "memoryFnWeaklySingular.png"), fig2)
 end # memoryFns
 
 function AbelKernel(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tuple
@@ -333,8 +333,8 @@ function Abel(myDirPath::String)
         end
     end
 
-    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax = Axis(fig[1, 1];
+    fig1 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax1 = Axis(fig1[1, 1];
         xlabel = "Upper Limit of Integration, 𝑥",
         ylabel = "Logarithm of Solution Error, ϵ",
         title = "Accuracy of Young's Algorithm: An Abel Kernel",
@@ -342,56 +342,56 @@ function Abel(myDirPath::String)
         xlabelsize = 20,
         ylabelsize = 20,
         yscale = log10)
-    lines!(ax, e₁, ϵ₁;
+    lines!(ax1, e₁, ϵ₁;
         linewidth = 3,
         linestyle = :solid,
         color = :red,
         label = "10")
-    lines!(ax, e₂, ϵ₂;
+    lines!(ax1, e₂, ϵ₂;
         linewidth = 3,
         linestyle = :solid,
         color = :blue,
         label = "100")
-    lines!(ax, e₃, ϵ₃;
+    lines!(ax1, e₃, ϵ₃;
         linewidth = 3,
         linestyle = :solid,
         color = :black,
         label = "1000")
     axislegend("N =",
         position = :rc)
-    save(string(myDirPath, "AbelVIEerror.png"), fig)
+    save(string(myDirPath, "AbelVIEerror.png"), fig1)
 
-    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax = Axis(fig[1, 1];
+    fig2 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax2 = Axis(fig2[1, 1];
         xlabel = "Upper Limit of Integration, 𝑥",
         ylabel = "Solution, 𝑓(𝑥)",
         title = "Accuracy of Young's Algorithm: An Abel Kernel",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
-    lines!(ax, x₁, y₁;
+    lines!(ax2, x₁, y₁;
         linewidth = 3,
         linestyle = :solid,
         color = :red,
         label = "10")
-    lines!(ax, x₂, y₂;
+    lines!(ax2, x₂, y₂;
         linewidth = 3,
         linestyle = :solid,
         color = :blue,
         label = "100")
-    lines!(ax, x₃, y₃;
+    lines!(ax2, x₃, y₃;
         linewidth = 3,
         linestyle = :solid,
         color = :cyan,
         label = "1000")
-    lines!(ax, x₂, z₂;
+    lines!(ax2, x₂, z₂;
         linewidth = 3,
         linestyle = :solid,
         color = :black,
         label = "exact")
     axislegend("N =",
         position = :lt)
-    save(string(myDirPath, "AbelVIEsoltion.png"), fig)
+    save(string(myDirPath, "AbelVIEsoltion.png"), fig2)
 end # Abel
 
 function persistence(myDirPath::String)

@@ -272,7 +272,7 @@ The global nodes of integration associate with times $t_n$ where $t_n = t_{n-1} 
 
 ### Moment Matrices
 
-The greatest expense in implementing this numerical method is often in the computing its moment matrices. Fortunately, once gotten they can be reused in future solutions. There is a more efficient algorithm for implementing an exponential kernel that is based upon its recursive property [6], but that algorithm is restricted to that kernel alone. The algorithm presented below is applicable to all types of kernel functions, and is therefore versatile.
+A large expense in implementing this numerical method is in the computation of its moment matrices. Fortunately, once gotten they can be reused in future solutions. There is a more efficient algorithm for implementing an exponential kernel that is based upon its recursive property [6], but that algorithm is restricted to that kernel alone. The algorithm presented below is applicable to all types of kernel functions, and is therefore versatile.
 
 The moment matrices are solutions to integral equations. For $n=1$, moment $\boldsymbol{\mu}_1$ describes a $3 \times 3$ matrix whose elements are solutions to the Volterra integral
 $$
@@ -352,7 +352,7 @@ that whenever $n > N_{\max}$ will continue to advance along its path, but now ac
 $$
 \boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{N_{\max}-1} \boldsymbol{W}^{\mathsf{T}}_{N_{\max}-m+1} \boldsymbol{f}^{\prime}_{m+n-N_{\max}} \right)
 $$
-which removes forcing functions from $\boldsymbol{f}^{\prime}_1$ through $\boldsymbol{f}^{\prime}_{n-N_{\max}}$ from its summation history. These memories are so distant that they have effectively been forgotten.
+which removes forcing functions from $\boldsymbol{f}^{\prime}_1$ through $\boldsymbol{f}^{\prime}_{n-N_{\max}}$ from its summation history. These memories are considered to be so distant that they have effectively been forgotten.
 
 ## Solving the Resulting Differential Equations
 

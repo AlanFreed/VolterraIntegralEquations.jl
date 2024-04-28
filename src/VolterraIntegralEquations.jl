@@ -555,7 +555,7 @@ function normalizedQuadratureWeights(systemOfUnits::String, dTime::PhysicalScala
 
     # Determine the truncation length for the array of weights.
     (k, τ) = kernel(systemOfUnits, dt, parameters)
-    L = get(ceil(τ/dt))
+    L = Int64(get(ceil(τ/dt)))
     if L < 10
         msg = string("WARNING: There are ", L, " integration steps per unit\n")
         msg = string(msg, "characteristic time. There should be at least 10.")

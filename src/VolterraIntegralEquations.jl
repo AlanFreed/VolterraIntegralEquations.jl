@@ -1,6 +1,6 @@
 #=
 Created on Tue 27 Jun 2023
-Updated on Mon 19 Feb 2024
+Updated on Sun 28 Apr 2024
 =#
 
 #=
@@ -555,9 +555,9 @@ function normalizedQuadratureWeights(systemOfUnits::String, dTime::PhysicalScala
 
     # Determine the truncation length for the array of weights.
     (k, τ) = kernel(systemOfUnits, dt, parameters)
-    L = ceil(τ/dt)
+    L = get(ceil(τ/dt))
     if L < 10
-        msg = string("WARNING: There are ", Int64(get(L)), " integration steps per unit\n")
+        msg = string("WARNING: There are ", L, " integration steps per unit\n")
         msg = string(msg, "characteristic time. There should be at least 10.")
         println(msg)
     end
@@ -571,7 +571,7 @@ function normalizedQuadratureWeights(systemOfUnits::String, dTime::PhysicalScala
     N = 1
     (k, τ) = kernel(systemOfUnits, N*L*dt, parameters)
     while get(k) > 10.0^(-SF)
-        N = N + 1
+        N += 1
         (k, τ) = kernel(systemOfUnits, N*L*dt, parameters)
     end
     if N * L < Nₘₐₓ

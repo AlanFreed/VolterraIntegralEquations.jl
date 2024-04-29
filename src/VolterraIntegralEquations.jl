@@ -902,11 +902,9 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
             f′[2] = vie.f′[3(m-1)+2]
             f′[3] = vie.f′[3(m-1)+3]
             for i in 1:3
-                sum = PhysicalScalar(g′ₙ.units)
                 for j in 1:3
-                    sum = sum - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
                 end
-                b′[i] = sum
             end
         end
     else  # vie.n > vie.Nₘₐₓ
@@ -917,11 +915,9 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
             f′[2] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+2]
             f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
             for i in 1:3
-                sum = PhysicalScalar(g′ₙ.units)
                 for j in 1:3
-                    sum = sum - cₙ * W[j,i] * f′[j]
+                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
                 end
-                b′[i] = sum
             end
         end
     end
@@ -1167,14 +1163,11 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalV
 
     # Finally, solve A x′ = b′ for x′, i.e., solve the linear system.
     for i in 1:3
+        sum = PhysicalVector(g′ₙ.array.cols, g′ₙ.units)
         for j in 1:3
-            x′[i] = x′[i] + W₁inv[i,j] * b′[j]
+            sum = sum + W₁inv[i,j] * b′[j]
         end
-    end
-
-    # Assign this solution to its location for nᵗʰ step in the history vector.
-    for i in 1:3
-        vie.f′[3(vie.n-1)+i] = x′[i]
+        vie.f′[3(vie.n-1)+i] = sum  # sum = x′[i]
     end
 
     n = get(vie.n)
@@ -1409,14 +1402,11 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalT
 
     # Finally, solve A x′ = b′ for x′, i.e., solve the linear system.
     for i in 1:3
+        sum = PhysicalTensor(g′ₙ.array.rows, g′ₙ.array.cols, g′ₙ.units)
         for j in 1:3
-            x′[i] = x′[i] + W₁inv[i,j] * b′[j]
+            sum = sum + W₁inv[i,j] * b′[j]
         end
-    end
-
-    # Assign this solution to its location for nᵗʰ step in the history vector.
-    for i in 1:3
-        vie.f′[3(vie.n-1)+i] = x′[i]
+        vie.f′[3(vie.n-1)+i] = sum  # sum = x′[i]
     end
 
     n = get(vie.n)

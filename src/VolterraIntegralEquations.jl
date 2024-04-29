@@ -1,6 +1,6 @@
 #=
 Created on Tue 27 Jun 2023
-Updated on Sun 28 Apr 2024
+Updated on Mon 29 Apr 2024
 =#
 
 #=
@@ -65,7 +65,7 @@ export
     # where
     #   g′ is the time rate-of-change of some control function g(t)
     #   f′ is the time rate-of-change of the response function f(t)
-    #   c  is a scalar function, e.g., (E₀ - E∞)/E∞ in viscoelasticity
+    #   c  is a scalar function, e.g., (E₀ - E∞)/E∞ in linear viscoelasticity
     #   K  is a memory function, i.e., the derivative of a creep function
     # Here f′ and g′ may be scalar, vector or tensor valued.
     # Upon solving f′, the resulting ODE can be integrated to get response f.
@@ -117,7 +117,8 @@ whose material parameters are supplied via the following tuples:
     SLS     parameters = (τ,)
 wherein τ denotes a characteristic time for creep. There are two in the BOX model, and n in the MCM, arranged so that 0 < τ₁ < τ₂ < ⋯ < τₙ, with each cᵢ > 0, i = 1, 2, …, n, being a coefficient in the Prony series whose collective sum is 1, i.e., ∑_{i=1}^n cᵢ = 1. Parameter α is the exponent in a power law, and parameter δ is a shift in time introduced to remove a weak singularity.
 
-The following memory functions are weakly singular at the upper limit of integration in their Volterra integrals: CCM, FLS and KWW.
+The following memory functions are weakly singular at the upper limit of integration in their Volterra integrals:
+    CCM, FLS and KWW.
 =#
 
 """
@@ -534,11 +535,11 @@ end # SLS
 """
 Function\n
     W = normalizedQuadratureWeights(systemOfUnits, dTime, parameters, kernel, significantFigures)\n
-where `systemOfUnits` is either "SI" or "CGS", `dTime` is an uniform increment in time separating nodes from their nearest neighbors, `parameters` is a tuple of material constants to be passed to the memory function `kernel`. The array for weights of quadrature is truncated at a specified number of `significantFigures` in accuracy, which default to 5, but accept values from 2 through 10.\n
+where `systemOfUnits` is either "SI" or "CGS", `dTime` is an uniform increment in time separating nodes from their nearest neighbors, `parameters` is a tuple of material constants to be passed to the memory function `kernel`. The array for weights of quadrature is truncated at a specified number of `significantFigures` in accuracy, which defaults to 5, but accepts values from 2 through 10.\n
 The supplied memory function `kernel` is to have an interface of\n
     (k, τ) = kernel(systemOfUnits, time, parameters)\n
 where `systemOfUnits` is either "SI" or "CGS", `time` is current time, and `parameters` is a tuple containing this kernel's physical parameters, i.e., its material constants. The returned tuple contains values for the kernel `k` and its characteristic time `τ.`\n
-The weights of quadrature returned here are normalized, e.g., the actual weights of quadrature for a viscoelastic kernel would be these normalized weights multiplied by a scalar coefficient of (E₀ - E∞)/E∞, which is to be returned from a function assigned to field `c` in an object implementing abstract type `VolterraIntegralEquation.`\n
+The weights of quadrature returned here are normalized, e.g., the actual weights of quadrature for a linear viscoelastic kernel would be these normalized weights multiplied by a scalar coefficient of (E₀ - E∞)/E∞, which is to be returned from a function assigned to field `c` in an object implementing abstract type `VolterraIntegralEquation.`\n
 The returned array holds Nₘₐₓ normalized quadrature weights that is to be assigned to field `W` in an object implementing abstract type `VolterraIntegralEquation.`
 """
 function normalizedQuadratureWeights(systemOfUnits::String, dTime::PhysicalScalar, parameters::Tuple, kernel::Function, Nₘₐₓ::Integer, significantFigures::Integer=5)::ArrayOfPhysicalTensors
@@ -901,9 +902,11 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
             f′[2] = vie.f′[3(m-1)+2]
             f′[3] = vie.f′[3(m-1)+3]
             for i in 1:3
+                sum = PhysicalScalar(g′ₙ.units)
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    sum = sum - cₙ * W[j,i] * f′[j]
                 end
+                b′[i] = sum
             end
         end
     else  # vie.n > vie.Nₘₐₓ
@@ -914,23 +917,22 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
             f′[2] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+2]
             f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
             for i in 1:3
+                sum = PhysicalScalar(g′ₙ.units)
                 for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
+                    sum = sum - cₙ * W[j,i] * f′[j]
                 end
+                b′[i] = sum
             end
         end
     end
 
     # Finally, solve A x′ = b′ for x′, i.e., solve the linear system.
     for i in 1:3
+        sum = PhysicalScalar(g′ₙ.units)
         for j in 1:3
-            x′[i] = x′[i] + W₁inv[i,j] * b′[j]
+            sum = sum + W₁inv[i,j] * b′[j]
         end
-    end
-
-    # Assign this solution to its location for nᵗʰ step in the history vector.
-    for i in 1:3
-        vie.f′[3(vie.n-1)+i] = x′[i]
+        vie.f′[3(vie.n-1)+i] = sum  # where sum = x′
     end
 
     n = get(vie.n)

@@ -7,8 +7,7 @@ using
 
 export
     Abel,
-    memoryFns,
-    persistence
+    memoryFns
 
 function memoryFns(myDirPath::String)
     N = 150
@@ -61,33 +60,33 @@ function memoryFns(myDirPath::String)
     # Populate the memory function arrays
     time  = PhysicalScalar(CGS_SECOND)
     dTime = 3 * τ_ϵ / N
-    (k, tau) = BOX("CGS", time, (τ_σ, τ_ϵ))
+    (k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
     arrayBOX[1] = k
-    (k, tau) = MPL("CGS", time, (α, τ_ϵ))
+    (k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
     arrayMPL[1] = k
-    (k, tau) = RFS("CGS", time, (α, δ, τ_ϵ))
+    (k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
     arrayRFS[1] = k
-    (k, tau) = SLS("CGS", time, (τ_ϵ,))
+    (k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
     arraySLS[1] = k
     for n in 1:N
         time = time + dTime
         # weakly singular kernels
-        (k, tau) = CCM("CGS", time, (α, τ_ϵ))
+        (k, tau) = VolterraIntegralEquations.CCM("CGS", time, (α, τ_ϵ))
         arrayCCM[n] = k
-        (k, tau) = FLS("CGS", time, (α, τ_ϵ))
+        (k, tau) = VolterraIntegralEquations.FLS("CGS", time, (α, τ_ϵ))
         arrayFLS[n] = k
-        (k, tau) = KWW("CGS", time, (α, τ_ϵ))
+        (k, tau) = VolterraIntegralEquations.KWW("CGS", time, (α, τ_ϵ))
         arrayKWW[n] = k
         # non-singular kernels
-        (k, tau) = BOX("CGS", time, (τ_σ, τ_ϵ))
+        (k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
         arrayBOX[n] = k
-        (k, tau) = MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
+        (k, tau) = VolterraIntegralEquations.MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
         arrayMCM[n] = k
-        (k, tau) = MPL("CGS", time, (α, τ_ϵ))
+        (k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
         arrayMPL[n+1] = k
-        (k, tau) = RFS("CGS", time, (α, δ, τ_ϵ))
+        (k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
         arrayRFS[n+1] = k
-        (k, tau) = SLS("CGS", time, (τ_ϵ,))
+        (k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
         arraySLS[n+1] = k
     end
 
@@ -197,38 +196,33 @@ end # memoryFns
 function AbelKernel(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tuple
     kernel = 1 / sqrt(time)
     tau = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
-    return (kernel, tau)
+    return ("Abel", kernel, tau)
 end # AbelKernel
 
 function Abel(myDirPath::String)
     CairoMakie.activate!(type = "png")
 
     # Solve an Abel integral equation: solution parameters.
-    t = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
+    t = PhysicalScalar(10.0, CGS_DIMENSIONLESS) # upper limit of integration
     p = ()
     c = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
     f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
     g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
 
-    # Solve an Abel integral equation: 10 steps.
-    N₁ = 10
-    Nₘₐₓ = 1000
-    sigFigs = 3
+    # Solve an Abel integral equation: 30 steps.
+    println("Solving the Abel integral in 30 steps.")
+    N₁ = 30
     dt₁ = t / N₁
-    W₁ = normalizedQuadratureWeights("SI", dt₁, p, AbelKernel, Nₘₐₓ, sigFigs)
-    g′ₙ = ArrayOfPhysicalScalars(3, CGS_DIMENSIONLESS)
-    VIE₁ = VolterraIntegralScalarEquation("SI", N₁, dt₁, f₀, g₀, W₁)
+    W₁ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₁, dt₁, AbelKernel, p)
+    g′ₙ = PhysicalScalar(CGS_DIMENSIONLESS)
+    VIE₁ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₁, dt₁, f₀, g₀, W₁)
     for n in 1:N₁
-        tₙ₁ = (1/6 + n - 1)*dt₁
-        tₙ₂ = (1/2 + n - 1)*dt₁
-        tₙ₃ = (5/6 + n - 1)*dt₁
-        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
-        advance!(VIE₁, g′ₙ, c)
+        tₙ = n * get(dt₁)
+        set!(g′ₙ, π*tₙ/2 + sqrt(tₙ))
+        VolterraIntegralEquations.advance!(VIE₁, g′ₙ, c)
     end
 
-    # Create the arrays for plotting: 10 steps.
+    # Create the arrays for plotting: 30 steps.
     x₁ = zeros(Float64, N₁+1)
     for n in 1:N₁+1
         x₁[n] = (n - 1) * get(dt₁)
@@ -254,18 +248,15 @@ function Abel(myDirPath::String)
     end
 
     # Solve an Abel integral equation: 100 steps.
+    println("Solving the Abel integral in 100 steps.")
     N₂ = 100
     dt₂ = t / N₂
-    W₂ = normalizedQuadratureWeights("SI", dt₂, (), AbelKernel, Nₘₐₓ, sigFigs)
-    VIE₂ = VolterraIntegralScalarEquation("SI", N₂, dt₂, f₀, g₀, W₂)
+    W₂ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₂, dt₂, AbelKernel, p)
+    VIE₂ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₂, dt₂, f₀, g₀, W₂)
     for n in 1:N₂
-        tₙ₁ = (1/6 + n - 1)*dt₂
-        tₙ₂ = (1/2 + n - 1)*dt₂
-        tₙ₃ = (5/6 + n - 1)*dt₂
-        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
-        advance!(VIE₂, g′ₙ, c)
+        t₂ = n * get(dt₂)
+        set!(g′ₙ, π*t₂/2 + sqrt(t₂))
+        VolterraIntegralEquations.advance!(VIE₂, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 100 steps.
@@ -293,22 +284,19 @@ function Abel(myDirPath::String)
         end
     end
 
-    # Solve an Abel integral equation: 1000 steps.
-    N₃ = 1000
+    # Solve an Abel integral equation: 300 steps.
+    println("Solving the Abel integral in 300 steps.")
+    N₃ = 300
     dt₃ = t / N₃
-    W₃ = normalizedQuadratureWeights("SI", dt₃, (), AbelKernel, Nₘₐₓ, sigFigs)
-    VIE₃ = VolterraIntegralScalarEquation("SI", N₃, dt₃, f₀, g₀, W₃)
+    W₃ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₃, dt₃, AbelKernel, p)
+    VIE₃ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₃, dt₃, f₀, g₀, W₃)
     for n in 1:N₃
-        tₙ₁ = (1/6 + n - 1)*dt₃
-        tₙ₂ = (1/2 + n - 1)*dt₃
-        tₙ₃ = (5/6 + n - 1)*dt₃
-        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
-        advance!(VIE₃, g′ₙ, c)
+        t₃ = n * get(dt₃)
+        set!(g′ₙ, π*t₃/2 + sqrt(t₃))
+        VolterraIntegralEquations.advance!(VIE₃, g′ₙ, c)
     end
 
-    # Create the arrays for plotting: 1000 steps.
+    # Create the arrays for plotting: 300 steps.
     x₃ = zeros(Float64, N₃+1)
     for n in 1:N₃+1
         x₃[n] = (n - 1) * get(dt₃)
@@ -333,11 +321,48 @@ function Abel(myDirPath::String)
         end
     end
 
+    # Solve an Abel integral equation: 1000 steps.
+    println("Solving the Abel integral in 1000 steps.")
+    N₄ = 1000
+    dt₄ = t / N₄
+    W₄ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₄, dt₄, AbelKernel, p)
+    VIE₄ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₄, dt₄, f₀, g₀, W₄)
+    for n in 1:N₄
+        t₄ = n * get(dt₄)
+        set!(g′ₙ, π*t₄/2 + sqrt(t₄))
+        VolterraIntegralEquations.advance!(VIE₄, g′ₙ, c)
+    end
+
+    # Create the arrays for plotting: 1000 steps.
+    x₄ = zeros(Float64, N₄+1)
+    for n in 1:N₄+1
+        x₄[n] = (n - 1) * get(dt₄)
+    end
+    y₄ = zeros(Float64, N₄+1)
+    for n in 1:N₄+1
+        soln = VIE₄.f[n]
+        y₄[n] = get(soln)
+    end
+    z₄ = zeros(Float64, N₄+1)
+    for n in 1:N₄+1
+        z₄[n] = (2/3)*x₄[n]^(3/2)
+    end
+    e₄ = zeros(Float64, N₄)
+    ϵ₄ = zeros(Float64, N₄)
+    for n in 1:N₄
+        e₄[n] = x₄[n+1]
+        if abs(z₄[n+1]) < 1.0
+            ϵ₄[n] = abs(z₄[n+1] - y₄[n+1])
+        else
+            ϵ₄[n] = abs(z₄[n+1] - y₄[n+1]) / abs(z₄[n+1])
+        end
+    end
+
+    println("Constructing the figures.")
     fig1 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax1 = Axis(fig1[1, 1];
-        xlabel = "Upper Limit of Integration, 𝑥",
-        ylabel = "Logarithm of Solution Error, ϵ",
-        title = "Accuracy of Young's Algorithm: An Abel Kernel",
+        xlabel = "Upper Limit of Integration, x",
+        ylabel = "Logarithm of Solution Error, log(ϵ)",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20,
@@ -346,7 +371,7 @@ function Abel(myDirPath::String)
         linewidth = 3,
         linestyle = :solid,
         color = :red,
-        label = "10")
+        label = "30")
     lines!(ax1, e₂, ϵ₂;
         linewidth = 3,
         linestyle = :solid,
@@ -355,17 +380,22 @@ function Abel(myDirPath::String)
     lines!(ax1, e₃, ϵ₃;
         linewidth = 3,
         linestyle = :solid,
-        color = :black,
+        color = :orange,
+        label = "300")
+    lines!(ax1, e₄, ϵ₄;
+        linewidth = 3,
+        linestyle = :solid,
+        color = :cyan,
         label = "1000")
     axislegend("N =",
-        position = :rc)
-    save(string(myDirPath, "AbelVIEerror.png"), fig1)
+        position = :rb)
+    fileName = string("Abel_VIE_error.png")
+    save(string(myDirPath, fileName), fig1)
 
     fig2 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
     ax2 = Axis(fig2[1, 1];
-        xlabel = "Upper Limit of Integration, 𝑥",
-        ylabel = "Solution, 𝑓(𝑥)",
-        title = "Accuracy of Young's Algorithm: An Abel Kernel",
+        xlabel = "Upper Limit of Integration, x",
+        ylabel = "Solution, ϕ(x)",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
@@ -373,13 +403,18 @@ function Abel(myDirPath::String)
         linewidth = 3,
         linestyle = :solid,
         color = :red,
-        label = "10")
+        label = "30")
     lines!(ax2, x₂, y₂;
         linewidth = 3,
         linestyle = :solid,
         color = :blue,
         label = "100")
     lines!(ax2, x₃, y₃;
+        linewidth = 3,
+        linestyle = :solid,
+        color = :orange,
+        label = "300")
+    lines!(ax2, x₄, y₄;
         linewidth = 3,
         linestyle = :solid,
         color = :cyan,
@@ -391,83 +426,8 @@ function Abel(myDirPath::String)
         label = "exact")
     axislegend("N =",
         position = :lt)
-    save(string(myDirPath, "AbelVIEsoltion.png"), fig2)
+    fileName = string("Abel_VIE_soln.png")
+    save(string(myDirPath, fileName), fig2)
 end # Abel
-
-function persistence(myDirPath::String)
-    CairoMakie.activate!(type = "png")
-
-    # Solve an Abel integral equation: solution parameters.
-    t  = PhysicalScalar(6.082201995573399, CGS_DIMENSIONLESS) # upper limit of integration
-    c  = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
-    f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
-    g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
-
-    # Solve an Abel integral equation: 10 steps.
-    p = ()
-    N₁ = 10
-    Nₘₐₓ = 1000
-    dt₁ = t / N₁
-    sigFigs = 2
-    W₁ = normalizedQuadratureWeights("CGS", dt₁, p, AbelKernel, Nₘₐₓ, sigFigs)
-    g′ₙ = ArrayOfPhysicalScalars(3, CGS_DIMENSIONLESS)
-    VIE₁ = VolterraIntegralScalarEquation("CGS", N₁, dt₁, f₀, g₀, W₁)
-    for n in 1:N₁
-        tₙ₁ = (1/6 + n - 1)*dt₁
-        tₙ₂ = (1/2 + n - 1)*dt₁
-        tₙ₃ = (5/6 + n - 1)*dt₁
-        g′ₙ[1] = π*tₙ₁/2 + sqrt(tₙ₁)
-        g′ₙ[2] = π*tₙ₂/2 + sqrt(tₙ₂)
-        g′ₙ[3] = π*tₙ₃/2 + sqrt(tₙ₃)
-        advance!(VIE₁, g′ₙ, c)
-    end
-
-    # Save this solution to file.
-    my_dir_path = myDirPath
-    json_stream = openJSONWriter(my_dir_path, "testAbelIntEq.json")
-    VolterraIntegralEquations.toFile(VIE₁, json_stream)
-    close(json_stream)
-    json_stream = openJSONReader(my_dir_path, "testAbelIntEq.json")
-    VIE₂ = VolterraIntegralEquations.fromFile(VolterraIntegralScalarEquation, json_stream)
-    close(json_stream)
-
-    # Create arrays for plotting.
-    x₁ = zeros(Float64, N₁+1)
-    for n in 1:N₁+1
-        x₁[n] = (n - 1) * get(dt₁)
-    end
-    y₁ = zeros(Float64, N₁+1)
-    for n in 1:N₁+1
-        soln = VIE₁.f[n]
-        y₁[n] = get(soln)
-    end
-    y₂ = zeros(Float64, N₁+1)
-    for n in 1:N₁+1
-        soln = VIE₂.f[n]
-        y₂[n] = get(soln)
-    end
-
-    fig = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax = Axis(fig[1, 1];
-        xlabel = "Upper Limit of Integration, 𝑥",
-        ylabel = "Solution, 𝑓(𝑥)",
-        title = "Verify Stored JSON File",
-        titlesize = 24,
-        xlabelsize = 20,
-        ylabelsize = 20)
-    lines!(ax, x₁, y₁;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :red,
-        label = "To File")
-    lines!(ax, x₁, y₂;
-        linewidth = 3,
-        linestyle = :dash,
-        color = :black,
-        label = "From File")
-    axislegend("JSON",
-        position = :lt)
-    save(string(my_dir_path, "VIEsoltionJSON.png"), fig)
-end # persistence
 
 end # testVolterraIntEqs

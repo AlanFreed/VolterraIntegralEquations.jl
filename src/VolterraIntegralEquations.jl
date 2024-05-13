@@ -1,6 +1,6 @@
 #=
 Created on Tue 27 Jun 2023
-Updated on Mon 29 Apr 2024
+Updated on Mon 13 May 2024
 =#
 
 #=
@@ -94,8 +94,8 @@ export
 
 #= 
 Memory functions are the derivatives of creep functions [Freed, 2014], the latter being more commonly found in the literature. All memory functions are to have an interface of:
-    (k, τ) = <memoryFunctionName>(systemOfUnits, time, parameters)
-which returns a tuple whose first entry is the value of the memory function `k` and whose second entry is its controlling characteristic time `τ`, which is the smallest one whenever multiple characteristic times are present. Here argument `systemOfUnits` is either "SI" or "CGS", argument `time` is current time, and argument `parameters` is a tuple containing this kernel's physical parameters.
+    (name, k, τ) = <memoryFunctionName>(systemOfUnits, time, parameters)
+which returns a tuple whose first entry is a string specifying the name of this kernel, e.g., "FLS", its second entry contains a value for this memory function `k` evaluated at `time,` and its third entry contains the kernel's controlling characteristic time `τ,` which is the smallest one whenever multiple characteristic times exist. At present, the supplied argument `systemOfUnits` to a kernel call can be either "SI" or "CGS". Its second argument `time` contains the current time, while its final argument `parameters` is a tuple containing this kernel's physical parameters.
 
 Specifically, the following memory functions have been implemented:
     BOX     the box kernel of Neuber, a.k.a. Fung's QLV kernel
@@ -115,10 +115,11 @@ whose material parameters are supplied via the following tuples:
     MPL     parameters = (α, τ)
     RFS     parameters = (α, δ, τ)
     SLS     parameters = (τ,)
-wherein τ denotes a characteristic time for creep. There are two in the BOX model, and n in the MCM, arranged so that 0 < τ₁ < τ₂ < ⋯ < τₙ, with each cᵢ > 0, i = 1, 2, …, n, being a coefficient in the Prony series whose collective sum is 1, i.e., ∑_{i=1}^n cᵢ = 1. Parameter α is the exponent in a power law, and parameter δ is a shift in time introduced to remove a weak singularity.
+wherein τ denotes a characteristic time for creep. There are two characteristic times in the BOX model, and n in the MCM, arranged so that 0 < τ₁ < τ₂ < ⋯ < τₙ, with each cᵢ > 0, i = 1, 2, …, n, being a coefficient in the Prony series whose collective sum is 1, i.e., ∑_{i=1}^n cᵢ = 1. Parameter α is the exponent in a power law, while parameter δ shifts time to remove a weak singularity.
 
 The following memory functions are weakly singular at the upper limit of integration in their Volterra integrals:
     CCM, FLS and KWW.
+Consequently, the existence of such kernels requires a numerical method that avoids this possible singularity which can occur at the upper limit of integration. Gauss' quadrature for integrating an integral has this property.
 =#
 
 """
@@ -164,7 +165,7 @@ function BOX(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Parameters τ₁ and τ₂ must be ordered as 0 < τ₁ < τ₂."
         throw(ErrorException(msg))
     end
-    return (k, τ₁)
+    return ("BOX", k, τ₁)
 end # BOX
 
 """
@@ -213,7 +214,7 @@ function CCM(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Parameters α and τ must be positive."
         throw(ErrorException(msg))
     end
-    return (k, τ)
+    return ("CCM", k, τ)
 end # CCM
 
 """
@@ -263,7 +264,7 @@ function FLS(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Parameter τ must be positive, and parameter α ∈ (0,1]."
         throw(ErrorException(msg))
     end
-    return (k, τ)
+    return ("FLS", k, τ)
 end # FLS
 
 """
@@ -312,7 +313,7 @@ function KWW(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Parameter τ must be positive and parameter α ∈ (0,1]."
         throw(ErrorException(msg))
     end
-    return (k, τ)
+    return ("KWW", k, τ)
 end # KWW
 
 """
@@ -396,7 +397,7 @@ function MCM(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Argument time must be non-negative, and parameters τᵢ must be positive."
         throw(ErrorException(msg))
     end
-    return (k, τ₁)
+    return ("MCM", k, τ₁)
 end # MCM
 
 """
@@ -436,7 +437,7 @@ function MPL(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Argument time must be non-negative, and parameters α and τ must be positive."
         throw(ErrorException(msg))
     end
-    return (k, τ)
+    return ("MPL", k, τ)
 end # MPL
 
 """
@@ -485,7 +486,7 @@ function RFS(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "Argument time must be non-negative, parameters τ and δ must be positive, and α ∈ (0,1]."
         throw(ErrorException(msg))
     end
-    return (k, τ)
+    return ("RFS", k, τ)
 end # RFS
 
 """
@@ -521,195 +522,157 @@ function SLS(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tu
         msg = "time must be non-negative, and τ must be positive."
         throw(ErrorException(msg))
     end
-    return (k, τ)
+    return ("SLS", k, τ)
 end # SLS
 
 #=
 -------------------------------------------------------------------------------
 =#
 
+# Weights and nodes for Gaussian quadrature, which are used to determine the
+# weights of quadrature for our Volterra integral equation solver.
+
+struct GaussQuad
+    S::Integer
+    w::Vector{Float64}
+    ξ::Vector{Float64}
+end
+
+w1 = zeros(Float64, 1)
+w1[1] = 2.0
+ξ1 = zeros(Float64, 1)
+
+w2 = zeros(Float64, 2)
+w2[1] = 1.0
+w2[2] = 1.0
+ξ2 = zeros(Float64, 2)
+ξ2[1] = -sqrt(1.0/3.0)
+ξ2[2] =  sqrt(1.0/3.0)
+
+w3 = zeros(Float64, 3)
+w3[1] = 5.0 / 9.0
+w3[2] = 8.0 / 9.0
+w3[3] = 5.0 / 9.0
+ξ3 = zeros(Float64, 3)
+ξ3[1] = -sqrt(3.0/5.0)
+ξ3[3] =  sqrt(3.0/5.0)
+
+w4 = zeros(Float64, 4)
+w4[1] = (18.0 - sqrt(30.0)) / 36.0
+w4[2] = (18.0 + sqrt(30.0)) / 36.0
+w4[3] = (18.0 + sqrt(30.0)) / 36.0
+w4[4] = (18.0 - sqrt(30.0)) / 36.0
+ξ4 = zeros(Float64, 4)
+ξ4[1] = -sqrt(3.0/7.0 + (2.0/7.0)*sqrt(6.0/5.0))
+ξ4[2] = -sqrt(3.0/7.0 - (2.0/7.0)*sqrt(6.0/5.0))
+ξ4[3] =  sqrt(3.0/7.0 - (2.0/7.0)*sqrt(6.0/5.0))
+ξ4[4] =  sqrt(3.0/7.0 + (2.0/7.0)*sqrt(6.0/5.0))
+
+w5 = zeros(Float64, 5)
+w5[1] = (322.0 - 13.0sqrt(70.0)) / 900.0
+w5[2] = (322.0 + 13.0sqrt(70.0)) / 900.0
+w5[3] = 128.0 / 225.0
+w5[4] = (322.0 + 13.0sqrt(70.0)) / 900.0
+w5[5] = (322.0 - 13.0sqrt(70.0)) / 900.0
+ξ5 = zeros(Float64, 5)
+ξ5[1] = -sqrt(5.0 + 2.0sqrt(10.0/7.0)) / 3.0
+ξ5[2] = -sqrt(5.0 - 2.0sqrt(10.0/7.0)) / 3.0
+ξ5[4] =  sqrt(5.0 - 2.0sqrt(10.0/7.0)) / 3.0
+ξ5[5] =  sqrt(5.0 + 2.0sqrt(10.0/7.0)) / 3.0
+
+GaussQuad1 = GaussQuad(1, w1, ξ1)
+GaussQuad2 = GaussQuad(2, w2, ξ2)
+GaussQuad3 = GaussQuad(3, w3, ξ3)
+GaussQuad4 = GaussQuad(4, w4, ξ4)
+GaussQuad5 = GaussQuad(5, w5, ξ5)
+
 # The function used to create normalized weights of quadrature, i.e., they are
-# not multiplied by coefficient c. The supplied kernel may be any of those 
-# pre-programmed above, or a kernel of one's own creation.
+# not multiplied by coefficient c. The supplied kernel may be any of those pre-
+# programmed above, or a kernel of one's own creation.
 
 """
 Function\n
-    W = normalizedQuadratureWeights(systemOfUnits, dTime, parameters, kernel, significantFigures)\n
-where `systemOfUnits` is either "SI" or "CGS", `dTime` is an uniform increment in time separating nodes from their nearest neighbors, `parameters` is a tuple of material constants to be passed to the memory function `kernel`. The array for weights of quadrature is truncated at a specified number of `significantFigures` in accuracy, which defaults to 5, but accepts values from 2 through 10.\n
+    W = normalizedQuadratureWeights(systemOfUnits, N, dTime, kernel, parameters)\n
+where at present `systemOfUnits` is either "SI" or "CGS". There are to be `N` intervals of size `dTime` that are to span a solution, whose `kernel` has `parameters` described via a tuple of material constants. These weights are written to a file in the user's ./files/ directory for efficient future use.\n
 The supplied memory function `kernel` is to have an interface of\n
-    (k, τ) = kernel(systemOfUnits, time, parameters)\n
-where `systemOfUnits` is either "SI" or "CGS", `time` is current time, and `parameters` is a tuple containing this kernel's physical parameters, i.e., its material constants. The returned tuple contains values for the kernel `k` and its characteristic time `τ.`\n
-The weights of quadrature returned here are normalized, e.g., the actual weights of quadrature for a linear viscoelastic kernel would be these normalized weights multiplied by a scalar coefficient of (E₀ - E∞)/E∞, which is to be returned from a function assigned to field `c` in an object implementing abstract type `VolterraIntegralEquation.`\n
-The returned array holds Nₘₐₓ normalized quadrature weights that is to be assigned to field `W` in an object implementing abstract type `VolterraIntegralEquation.`
+    (name, k, τ) = kernel(systemOfUnits, time, parameters)\n
+where `systemOfUnits` is either "SI" or "CGS", `time` is current time, and `parameters` is a tuple containing this kernel's physical parameters, i.e., its material constants. The returned tuple contains a string specifying the `name` of the kernel being evaluated, the value of kernel `k` being evaluated at `time,` and its characteristic time `τ.`\n
+The weights of quadrature returned here are normalized, e.g., the actual weights of quadrature for a linear viscoelastic kernel would be these normalized weights multiplied by a scalar coefficient of (E₀ - E∞)/E∞, which is to be supplied via a function call assigned to field `c` in an object implementing abstract type `VolterraIntegralEquation.`\n
+The returned array holds normalized quadrature weights that are to be assigned to field `W` in an object implementing abstract type `VolterraIntegralEquation.`
 """
-function normalizedQuadratureWeights(systemOfUnits::String, dTime::PhysicalScalar, parameters::Tuple, kernel::Function, Nₘₐₓ::Integer, significantFigures::Integer=5)::ArrayOfPhysicalTensors
+function normalizedQuadratureWeights(systemOfUnits::String, N::Integer, dTime::PhysicalScalar, kernel::Function, parameters::Tuple)::ArrayOfPhysicalScalars
 
     # Ensure the system of units is consistent.
     if (systemOfUnits == "SI") || (systemOfUnits == "si")
         dt = toSI(dTime)
+        units = "SI"
     elseif (systemOfUnits == "CGS") || (systemOfUnits == "cgs")
         dt = toCGS(dTime)
+        units = "CGS"
     else
         msg = "The assigned physical system of units is unknown."
         throw(ErrorException(msg))
     end
 
-    # Determine the truncation length for the array of weights.
-    (k, τ) = kernel(systemOfUnits, dt, parameters)
-    L = Int64(get(ceil(τ/dt)))
-    if L < 10
-        msg = string("WARNING: There are ", L, " integration steps per unit\n")
-        msg = string(msg, "characteristic time. There should be at least 10.")
-        println(msg)
+    # Verify the inputs.
+    if N < 1
+        msg = "The number of integration steps N must be positive."
+        throw(ErrorException, msg)
     end
-    if significantFigures < 2
-        SF = 2
-    elseif significantFigures > 10
-        SF = 10
-    else
-        SF = significantFigures
-    end
-    N = 1
-    (k, τ) = kernel(systemOfUnits, N*L*dt, parameters)
-    while get(k) > 10.0^(-SF)
-        N += 1
-        (k, τ) = kernel(systemOfUnits, N*L*dt, parameters)
-    end
-    if N * L < Nₘₐₓ
-        Nₘₐₓ = N * L
+    if get(dt) < eps(Float32)
+        msg = "The time step size dTime must be positive."
+        throw(ErrorException, msg)
     end
 
-    # Basic arrays needed to create the weights of quadrature.
+    # Check to see if quadrature weights have been previously calculated or not.
+    format = 'E'
+    precision = 6
+    aligned  = false
+    (fileName, k, τ) = kernel(systemOfUnits, dt, parameters)
+    if !isDimensionless(dt.units+k.units)
+        msg = "Units for dTime and for the kernel are not compatible."
+        throw(ErrorException, msg)
+    end
+    fileName = string(fileName, "_", units)
+    fileName = string(fileName, "_τ=", PhysicalFields.toString(get(τ); format, precision, aligned))
+    fileName = string(fileName, "_dt=", PhysicalFields.toString(get(dt); format, precision, aligned))
+    fileName = string(fileName, "_N=", N)
+    fileName = string(fileName, ".json")
+    dirPath  = string(pwd(), "/files/")
+    if !isdir(dirPath)
+        mkdir(dirPath)
+    end
+    my_file = string(dirPath, fileName)
+    if isfile(my_file)
+        # The quadrature weights exist. Read them in from a file.
+        json_stream = PhysicalFields.openJSONReader(dirPath, fileName)
+        quadWgts = PhysicalFields.fromFile(ArrayOfPhysicalScalars, json_stream)
+        PhysicalFields.closeJSONStream(json_stream)
+        return quadWgts
+    end
 
-    # Inverse of the 3x3 midpoint Vandermonde matrix X, i.e., Xinv.
-    Xinv = zeros(Float64, 3, 3)
-    Xinv[1,1] =  0.0
-    Xinv[1,2] = -0.5
-    Xinv[1,3] =  0.5
-    Xinv[2,1] =  1.0
-    Xinv[2,2] =  0.0
-    Xinv[2,3] = -1.0
-    Xinv[3,1] =  0.0
-    Xinv[3,2] =  0.5
-    Xinv[3,3] =  0.5
+    # Determine weights of quadrature for a Volterra integral equation.
+    quadWgts = ArrayOfPhysicalScalars(N, dt.units+k.units)
 
-    # The three Gauss-quadrature matrices used to create moment μ₁.
-    m = zeros(Float64, 3, 3, 3)  # for indices i, j, s in what follows
-    m[1,1,1] = 1.0
-    m[1,2,1] = 1.0
-    m[1,3,1] = 1.0
-    m[2,1,1] = -sqrt(3.0/80.0)
-    m[2,2,1] = -sqrt(27.0/80.0)
-    m[2,3,1] = -sqrt(15.0/16.0)
-    m[3,1,1] = 3.0 / 80.0
-    m[3,2,1] = 27.0 / 80.0
-    m[3,3,1] = 15.0 / 16.0
-
-    m[1,1,2] = 1.0
-    m[1,2,2] = 1.0
-    m[1,3,2] = 1.0
-    m[2,1,2] = 0.0
-    m[2,2,2] = 0.0
-    m[2,3,2] = 0.0
-    m[3,1,2] = 0.0
-    m[3,2,2] = 0.0
-    m[3,3,2] = 0.0
-
-    m[1,1,3] = 1.0
-    m[1,2,3] = 1.0
-    m[1,3,3] = 1.0
-    m[2,1,3] = sqrt(3.0/80.0)
-    m[2,2,3] = sqrt(27.0/80.0)
-    m[2,3,3] = sqrt(15.0/16.0)
-    m[3,1,3] = 3.0 / 80.0
-    m[3,2,3] = 27.0 / 80.0
-    m[3,3,3] = 15.0 / 16.0
-
-    # The three Gauss-quadrature vectors used to create moments μᵢ, i > 1.
-    v = zeros(Float64, 3,3)  # for indices i, s in what follows
-    v[1,1] = 1.0
-    v[2,1] = -sqrt(27.0/20.0)
-    v[3,1] = 27.0 / 20.0
-
-    v[1,2] = 1.0
-    v[2,2] = 0.0
-    v[3,2] = 0.0
-
-    v[1,3] = 1.0
-    v[2,3] = sqrt(27.0/20.0)
-    v[3,3] = 27.0 / 20.0
-
-    # The weights and nodes of Gaussian quadrature.
-    w = zeros(Float64, 3)
-    w[1] = 5.0 / 9.0
-    w[2] = 8.0 / 9.0
-    w[3] = 5.0 / 9.0
-
-    x = zeros(Float64, 3)
-    x[1] = -sqrt(3.0/5.0)
-    x[2] = 0.0
-    x[3] = sqrt(3.0/5.0)
-
-    #=
-    ----------------------------------------------------------------------------
-    =#
-
-    # Create the first moment matrix.
-
-    (k, τ) = kernel(systemOfUnits, dt, parameters)  # call made to establish units.
-    μ₁ = PhysicalTensor(3, 3, dt.units+k.units)
-    for j in 1:3
-        coef = (j - 0.5)*dt / 6
-        for i in 1:3
-            sum = PhysicalScalar(k.units)
-            for s in 1:3
-                t = (j - 0.5) * (1 - x[s]) * dt / 6
-                (k, τ) = kernel(systemOfUnits, t, parameters)
-                sum = sum + w[s] * m[i,j,s] * k
-            end
-            μ₁[i,j] = coef * sum
+    tₙ = PhysicalScalar(dt.units)
+    for n in 1:N
+        tₙ = tₙ + dt
+        # Use Gauss' 5ᵗʰ order method. Its accuracy matters.
+        quad = GaussQuad5
+        sum = PhysicalScalar(k.units)
+        for s in 1:quad.S
+            tₛ = (N - 0.5(2n - 1 + quad.ξ[s])) * dt
+            (name, kₛ, τₛ) = kernel(systemOfUnits, tₛ, parameters)
+            sum = sum + quad.w[s] * kₛ
         end
+        quadWgts[n] = 0.5dt * sum
     end
-    quadMatrix = PhysicalTensor(3, 3, μ₁.units)
-    for i in 1:3
-        for j in 1:3
-            sum = PhysicalScalar(μ₁.units)
-            for s in 1:3
-                sum = sum + Xinv[i,s] * μ₁[s,j]
-            end
-            quadMatrix[i,j] = sum
-        end
-    end
-    quadWgts = ArrayOfPhysicalTensors(Nₘₐₓ, 3, 3, μ₁.units)
-    quadWgts[1] = quadMatrix
 
-    # Create the remaining moment matrices.
-    coef = dt / 2
-    for n in 2:Nₘₐₓ
-        μₙ = PhysicalTensor(3, 3, μ₁.units)
-        for i in 1:3
-            for j in 1:3
-                sum = PhysicalScalar(k.units)
-                for s in 1:3
-                    t = (n - (5 - j)/3 - x[s]/2) * dt
-                    (k, τ) = kernel(systemOfUnits, t, parameters)
-                    sum = sum + w[s] * v[i,s] * k
-                end
-                μₙ[i,j] = coef * sum
-            end
-        end
-        quadMatrix = PhysicalTensor(3, 3, μₙ.units)
-        for i in 1:3
-            for j in 1:3
-                sum = PhysicalScalar(μₙ.units)
-                for s in 1:3
-                    sum = sum + Xinv[i,s] * μₙ[s,j]
-                end
-                quadMatrix[i,j] = sum
-            end
-        end
-        quadWgts[n] = quadMatrix
-    end
+    # Write these weights of quadrature to a file.
+    json_stream = PhysicalFields.openJSONWriter(dirPath, fileName)
+    PhysicalFields.toFile(quadWgts, json_stream)
+    PhysicalFields.closeJSONStream(json_stream)
+    println("Weights of quadrature have been written to a file.")
 
     return quadWgts
 end # noralizedQuadratureWeights
@@ -724,23 +687,22 @@ abstract type VolterraIntegralEquation end
 
 struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    dt::PhysicalScalar          # distance separating global integration nodes
-    N::Integer                  # number of integration nodes in a solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    dt::PhysicalScalar          # distance separating neighboring solution nodes
+    N::Int64                    # number of integration nodes in a solution path
     n::MInteger                 # current node along a solution path
-    # Arrays of length N+1 holding integrated variable rates at the global nodes
+    # Arrays of length N+1 holding control and response fields, and their rates
     f::ArrayOfPhysicalScalars   # array of integrated response function values
+    f′::ArrayOfPhysicalScalars  # array of response function rates
     g::ArrayOfPhysicalScalars   # array of integrated control function values
+    g′::ArrayOfPhysicalScalars  # array of control function rates
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervals
-    f′::ArrayOfPhysicalScalars  # history array of response function rates
-    # Array of Nₘₐₓ normalized weights of quadrature for a product integral
-    W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
+    # Array of N normalized weights of quadrature for a product integral
+    W::ArrayOfPhysicalScalars   # array holding the quadrature weights
 
     # constructors
 
     # For use when first creating this data structure.
-    function VolterraIntegralScalarEquation(systemOfUnits::String, N::Integer, dt::PhysicalScalar, f₀::PhysicalScalar, g₀::PhysicalScalar, W::ArrayOfPhysicalTensors)
+    function VolterraIntegralScalarEquation(systemOfUnits::String, N::Int64, dt::PhysicalScalar, f₀::PhysicalScalar, g₀::PhysicalScalar, W::ArrayOfPhysicalScalars)
 
         # Ensure that a consistent system of physical units is used.
         if (systemOfUnits == "SI") || (systemOfUnits == "si")
@@ -768,32 +730,32 @@ struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
             msg = "Physical units for initial conditions f₀ and g₀ must be equal."
             throw(ErrorException(msg))
         end
-        if !isDimensionless(𝑊) || (𝑊.array.rows ≠ 3) || (𝑊.array.cols ≠ 3)
-            msg = "Weights of quadrature W must be dimensionless 3x3 matrices."
+        if !isDimensionless(𝑊)
+            msg = "Weights of quadrature W must be dimensionless."
             throw(ErrorException(msg))
         end
 
         # Create the fields for this data structure,
-        Nₘₐₓ = 𝑊.array.pgs
         f = ArrayOfPhysicalScalars(N+1, 𝑓₀.units)
         f[1] = 𝑓₀
-        g = ArrayOfPhysicalScalars(N+1, 𝑔₀.units)
+        f′ = ArrayOfPhysicalScalars(N+1, 𝑓₀.units-d𝑡.units)
+        g  = ArrayOfPhysicalScalars(N+1, 𝑔₀.units)
         g[1] = 𝑔₀
-        t = ArrayOfPhysicalScalars(N+1, t₀.units)
+        g′ = ArrayOfPhysicalScalars(N+1, 𝑔₀.units-d𝑡.units)
+        t  = ArrayOfPhysicalScalars(N+1, t₀.units)
         t[1] = t₀
         for n in 1:N
             t[n+1] = n * d𝑡
         end
         n  = MInteger(1)
-        f′ = ArrayOfPhysicalScalars(3N, 𝑓₀.units-d𝑡.units)
 
-        new(d𝑡, N, Nₘₐₓ, n, f, g, t, f′, 𝑊)
+        new(d𝑡, N, n, f, f′, g, g′, t, 𝑊)
     end
 
     # Used by JSON3 whenever this data structure is to be created from a file.
-    function VolterraIntegralScalarEquation(dt::PhysicalScalar, N::Integer, Nₘₐₓ::Integer, n::MInteger, f::ArrayOfPhysicalScalars, g::ArrayOfPhysicalScalars, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalScalars, W::ArrayOfPhysicalTensors)
+    function VolterraIntegralScalarEquation(dt::PhysicalScalar, N::Int64, n::MInteger, f::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalScalars, g::ArrayOfPhysicalScalars, g′::ArrayOfPhysicalScalars, t::ArrayOfPhysicalScalars, W::ArrayOfPhysicalScalars)
 
-        new(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+        new(dt, N, n, f, f′, g, g′, t, W)
     end
 end # VolterraIntegralScalarEquation
 
@@ -802,27 +764,27 @@ end # VolterraIntegralScalarEquation
 function Base.:(copy)(vie::VolterraIntegralScalarEquation)::VolterraIntegralScalarEquation
     dt   = copy(vie.dt)
     N    = copy(vie.N)
-    Nₘₐₓ = copy(vie.Nₘₐₓ)
     n    = copy(vie.n)
     f    = copy(vie.f)
-    g    = copy(vie.g)
-    t    = copy(vie.t)
     f′   = copy(vie.f′)
+    g    = copy(vie.g)
+    g′   = copy(vie.g′)
+    t    = copy(vie.t)
     W    = copy(vie.W)
-    return VolterraIntegralScalarEquation(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    return VolterraIntegralScalarEquation(dt, N, n, f, f′, g, g′, t, W)
 end
 
 function Base.:(deepcopy)(vie::VolterraIntegralScalarEquation)::VolterraIntegralScalarEquation
     dt   = deepcopy(vie.dt)
     N    = deepcopy(vie.N)
-    Nₘₐₓ = deepcopy(vie.Nₘₐₓ)
     n    = deepcopy(vie.n)
     f    = deepcopy(vie.f)
-    g    = deepcopy(vie.g)
-    t    = deepcopy(vie.t)
     f′   = deepcopy(vie.f′)
+    g    = deepcopy(vie.g)
+    g′   = deepcopy(vie.g′)
+    t    = deepcopy(vie.t)
     W    = deepcopy(vie.W)
-    return VolterraIntegralScalarEquation(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    return VolterraIntegralScalarEquation(dt, N, n, f, f′, g, g′, t, W)
 end
 
 StructTypes.StructType(::Type{VolterraIntegralScalarEquation}) = StructTypes.Struct()
@@ -851,17 +813,13 @@ end
 
 # Solver for advancing a solution step-by-step.
 
-function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::PhysicalScalar, cₙ::PhysicalScalar)
     if vie.n > vie.N
         println("The Volterra integral solution has reached its endpoint.")
         return nothing
     end
 
     # verify inputs
-    if g′ₙ.array.len ≠ 3
-        msg = "The control function g′ₙ must be of length 3."
-        throw(ErrorException(msg))
-    end
     if g′ₙ.units ≠ vie.f′.units
         msg = "Physical units for g′ₙ must equal those of vie.f′.\n"
         msg = string(msg, "   g′ₙ has units ", PhysicalFields.toString(g′ₙ.units), "\n")
@@ -873,72 +831,31 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalS
         throw(ErrorException(msg))
     end
 
-    # Create the matrix coefficient for the right-hand side (rhs) product.
-    I = PhysicalTensor(3, 3, vie.W.units)
-    for i in 1:3
-        I[i,i] = PhysicalScalar(1.0, vie.W.units)
-    end
-    W₁ = vie.W[1]
-    W₁inv = inv(I + cₙ*transpose(W₁))
+    # update the counter
+    set!(vie.n, get(vie.n)+1)
 
-    # Create the temporary working arrays, which are of length 3.
-    b′ = ArrayOfPhysicalScalars(3, g′ₙ.units)
-    f′ = ArrayOfPhysicalScalars(3, g′ₙ.units)
-    x′ = ArrayOfPhysicalScalars(3, g′ₙ.units)
-
-    # Create the vector for the rhs product.
-
-    # First, add in the control contribution to the rhs vector.
-    for i in 1:3
-        b′[i] = g′ₙ[i]
-    end
-
-    # Second, incorporate the history effects acting on this rhs vector.
-    if vie.n ≤ vie.Nₘₐₓ
-        # Advance the solution along a path with full history.
-        for m in 1:vie.n-1
-            W = vie.W[vie.n-m+1]
-            f′[1] = vie.f′[3(m-1)+1]
-            f′[2] = vie.f′[3(m-1)+2]
-            f′[3] = vie.f′[3(m-1)+3]
-            for i in 1:3
-                for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
-                end
-            end
-        end
-    else  # vie.n > vie.Nₘₐₓ
-        # Advance the solution along a path with truncated history.
-        for m in 1:vie.Nₘₐₓ-1
-            W = vie.W[vie.Nₘₐₓ-m+1]
-            f′[1] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+1]
-            f′[2] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+2]
-            f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
-            for i in 1:3
-                for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
-                end
-            end
-        end
-    end
-
-    # Finally, solve A x′ = b′ for x′, i.e., solve the linear system.
-    for i in 1:3
-        sum = PhysicalScalar(g′ₙ.units)
-        for j in 1:3
-            sum = sum + W₁inv[i,j] * b′[j]
-        end
-        vie.f′[3(vie.n-1)+i] = sum  # where sum = x′
-    end
-
+    # Solve a Volterra integral equation to get the response rate.
     n = get(vie.n)
-    # Integrate rate expressions describing the control and response functions.
-    vie.f[n+1] = (vie.f[n] + (vie.dt/8) *
-        (3vie.f′[3(n-1)+1] + 2vie.f′[3(n-1)+2] + 3vie.f′[3(n-1)+3]))
-    vie.g[n+1] = vie.g[n] + (vie.dt/8) * (3g′ₙ[1] + 2g′ₙ[2] + 3g′ₙ[3])
+    sum = PhysicalScalar(vie.f′.units)
+    for i in 1:n-2
+        sum = sum + vie.W[vie.N-i] * vie.f′[n-i]
+    end
+    vie.f′[n] = (g′ₙ - cₙ*sum) / (1 + cₙ*vie.W[vie.N])
+    vie.g′[n] = g′ₙ
 
-    # Update the counter.
-    set!(vie.n, n+1)
+    # Integrate the differential equations governing control and response.
+    if vie.n == 2
+        vie.f[2] = vie.f[1] + 0.5vie.f′[2]*vie.dt
+        vie.g[2] = vie.g[1] + 0.5vie.g′[2]*vie.dt
+    elseif vie.n == 3
+        vie.f[3] = (4/3)*vie.f[2] - (1/3)*vie.f[1] + (2/3)*vie.f′[2]*vie.dt
+        vie.g[3] = (4/3)*vie.g[2] - (1/3)*vie.g[1] + (2/3)*vie.g′[2]*vie.dt
+    else
+        vie.f[n] = ((18/11)*vie.f[n-1] - (9/11)*vie.f[n-2] + (2/11)*vie.f[n-3]
+            + (6/11)*vie.f′[n]*vie.dt)
+        vie.g[n] = ((18/11)*vie.g[n-1] - (9/11)*vie.g[n-2] + (2/11)*vie.g[n-3]
+            + (6/11)*vie.g′[n]*vie.dt)
+    end
 
     return nothing
 end # advance!
@@ -946,7 +863,7 @@ end # advance!
 # Perform an iteration of refinement on a solution at current step n. Call only
 # if the control function g′ₙ or coefficient cₙ undergo iterative refinement.
 
-function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralScalarEquation, g′ₙ::PhysicalScalar, cₙ::PhysicalScalar)
 
     set!(vie.n, get(vie.n)-1)
     advance!(vie, g′ₙ, cₙ)
@@ -961,23 +878,22 @@ end # update!
 
 struct VolterraIntegralVectorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    dt::PhysicalScalar          # distance separating global integration nodes
-    N::Integer                  # number of integration nodes in a solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    dt::PhysicalScalar          # distance separating neighboring solution nodes
+    N::Int64                    # number of integration nodes in a solution path
     n::MInteger                 # current node along a solution path
-    # Arrays of length N+1 holding integrated variable rates at the global nodes
+    # Arrays of length N+1 holding control and response fields, and their rates
     f::ArrayOfPhysicalVectors   # array of integrated response function values
+    f′::ArrayOfPhysicalVectors  # array of response function rates
     g::ArrayOfPhysicalVectors   # array of integrated control function values
+    g′::ArrayOfPhysicalVectors  # array of control function rates
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervalS
-    f′::ArrayOfPhysicalVectors  # history array of response function rates
-    # Array of Nₘₐₓ normalized weights of quadrature for a product integral
-    W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
+    # Array of N normalized weights of quadrature for a product integral
+    W::ArrayOfPhysicalScalars   # array holding the quadrature weights
 
     # constructors
 
     # For use when first creating this data structure.
-    function VolterraIntegralVectorEquation(systemOfUnits::String, N::Integer, dt::PhysicalScalar, f₀::PhysicalVector, g₀::PhysicalVector, W::ArrayOfPhysicalTensors)
+    function VolterraIntegralVectorEquation(systemOfUnits::String, N::Int64, dt::PhysicalScalar, f₀::PhysicalVector, g₀::PhysicalVector, W::ArrayOfPhysicalScalars)
 
         # Ensure that a consistent system of physical units is used.
         if (systemOfUnits == "SI") || (systemOfUnits == "si")
@@ -1001,34 +917,40 @@ struct VolterraIntegralVectorEquation <: VolterraIntegralEquation
             msg = "The number of nodes N must be positive valued."
             throw(ErrorException(msg))
         end
-        if (𝑓₀.units ≠ 𝑔₀.units) || (𝑓₀.vector.len ≠ 𝑔₀.vector.len)
-            msg = "Units and dimensions for initial conditions f₀ and g₀ must be equal."
+        if 𝑓₀.units ≠ 𝑔₀.units
+            msg = "Physical units for initial conditions f₀ and g₀ must be equal."
             throw(ErrorException(msg))
         end
-        if !isDimensionless(𝑊) || (𝑊.array.rows ≠ 3) || (𝑊.array.cols ≠ 3)
-            msg = "Weights of quadrature W must be dimensionless 3x3 matrices."
+        if 𝑓₀.vector.len ≠ 𝑔₀.vector.len
+            msg = "Length of initial conditions, vectors f₀ and g₀, must equal."
+            throw(ErrorException(msg))
+        end
+        if !isDimensionless(𝑊)
+            msg = "Weights of quadrature W must be dimensionless."
             throw(ErrorException(msg))
         end
 
         # Create the fields for this data structure,
-        Nₘₐₓ = 𝑊.array.pgs
         f = ArrayOfPhysicalVectors(N+1, 𝑓₀.vector.len, 𝑓₀.units)
         f[1] = 𝑓₀
-        g = ArrayOfPhysicalVectors(N+1, 𝑔₀.vector.len, 𝑔₀.units)
+        f′ = ArrayOfPhysicalVectors(N+1, 𝑓₀.vector.len, 𝑓₀.units-d𝑡.units)
+        g  = ArrayOfPhysicalVectors(N+1, 𝑔₀.vector.len, 𝑔₀.units)
         g[1] = 𝑔₀
-        t = ArrayOfPhysicalScalars(N+1, t₀.units)
+        g′ = ArrayOfPhysicalVectors(N+1, 𝑔₀.vector.len, 𝑔₀.units-d𝑡.units)
+        t  = ArrayOfPhysicalScalars(N+1, t₀.units)
         t[1] = t₀
         for n in 1:N
             t[n+1] = n * d𝑡
         end
-        f′ = ArrayOfPhysicalVectors(3N, 𝑓₀.vector.len, 𝑓₀.units-d𝑡.units)
         n  = MInteger(1)
-        new(d𝑡, N, Nₘₐₓ, n, f, g, t, f′, 𝑊)
+
+        new(d𝑡, N, n, f, f′, g, g′, t, 𝑊)
     end
 
     # Used by JSON3 whenever this data structure is to be created from a file.
-    function VolterraIntegralVectorEquation(dt::PhysicalScalar, N::Integer, Nₘₐₓ::Integer, n::MInteger, f::ArrayOfPhysicalVectors, g::ArrayOfPhysicalVectors, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalVectors, W::ArrayOfPhysicalTensors)
-        new(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    function VolterraIntegralVectorEquation(dt::PhysicalScalar, N::Int64, n::MInteger, f::ArrayOfPhysicalVectors, f′::ArrayOfPhysicalVectors, g::ArrayOfPhysicalVectors, g′::ArrayOfPhysicalVectors, t::ArrayOfPhysicalScalars, W::ArrayOfPhysicalScalars)
+
+        new(dt, N, n, f, f′, g, g′, t, W)
     end
 end # VolterraIntegralVectorEquation
 
@@ -1037,27 +959,27 @@ end # VolterraIntegralVectorEquation
 function Base.:(copy)(vie::VolterraIntegralVectorEquation)::VolterraIntegralVectorEquation
     dt   = copy(vie.dt)
     N    = copy(vie.N)
-    Nₘₐₓ = copy(vie.Nₘₐₓ)
     n    = copy(vie.n)
     f    = copy(vie.f)
-    g    = copy(vie.g)
-    t    = copy(vie.t)
     f′   = copy(vie.f′)
+    g    = copy(vie.g)
+    g′   = copy(vie.g′)
+    t    = copy(vie.t)
     W    = copy(vie.W)
-    return VolterraIntegralVectorEquation(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    return VolterraIntegralVectorEquation(dt, N, n, f, f′, g, g′, t, W)
 end
 
 function Base.:(deepcopy)(vie::VolterraIntegralVectorEquation)::VolterraIntegralVectorEquation
     dt   = deepcopy(vie.dt)
     N    = deepcopy(vie.N)
-    Nₘₐₓ = deepcopy(vie.Nₘₐₓ)
     n    = deepcopy(vie.n)
     f    = deepcopy(vie.f)
-    g    = deepcopy(vie.g)
-    t    = deepcopy(vie.t)
     f′   = deepcopy(vie.f′)
+    g    = deepcopy(vie.g)
+    g′   = deepcopy(vie.g′)
+    t    = deepcopy(vie.t)
     W    = deepcopy(vie.W)
-    return VolterraIntegralVectorEquation(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    return VolterraIntegralVectorEquation(dt, N, n, f, f′, g, g′, t, W)
 end
 
 StructTypes.StructType(::Type{VolterraIntegralVectorEquation}) = StructTypes.Struct()
@@ -1086,7 +1008,7 @@ end
 
 # Solver for advancing a solution step-by-step.
 
-function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::PhysicalVector, cₙ::PhysicalScalar)
     if vie.n > vie.N
         println("The Volterra integral solution has reached its endpoint.")
         return nothing
@@ -1099,12 +1021,8 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalV
         msg = string(msg, "   f′  has units ", PhysicalFields.toString(vie.f′.units))
         throw(ErrorException(msg))
     end
-    if g′ₙ.array.rows ≠ 3
-        msg = "The control function g′ₙ must be contain 3 vectors."
-        throw(ErrorException(msg))
-    end
-    if g′ₙ.array.cols ≠ vie.f′.array.cols
-        msg = "The length of each vector in g′ₙ must be of length vector vie.f′."
+    if g′ₙ.vector.len ≠ g′.array.cols
+        msg = "Vector g′ₙ has the wrong length."
         throw(ErrorException(msg))
     end
     if !isDimensionless(cₙ)
@@ -1112,72 +1030,40 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalV
         throw(ErrorException(msg))
     end
 
-    # Create the matrix coefficient for the right-hand side (rhs) product.
-    I = PhysicalTensor(3, 3, vie.W.units)
-    for i in 1:3
-        I[i,i] = PhysicalScalar(1.0, vie.W.units)
-    end
-    W₁ = vie.W[1]
-    W₁inv = inv(I + cₙ*transpose(W₁))
+    # update the counter
+    set!(vie.n, get(vie.n)+1)
 
-    # Create the temporary working arrays, which are of length 3.
-    b′ = ArrayOfPhysicalVectors(3, g′ₙ.array.cols, g′ₙ.units)
-    f′ = ArrayOfPhysicalVectors(3, g′ₙ.array.cols, g′ₙ.units)
-    x′ = ArrayOfPhysicalVectors(3, g′ₙ.array.cols, g′ₙ.units)
-
-    # Create the vector for the rhs product.
-
-    # First, add in the control contribution to the rhs vector.
-    for i in 1:3
-        b′[i] = g′ₙ[i]
-    end
-
-    # Second, incorporate the history effects acting on this rhs vector.
-    if vie.n ≤ vie.Nₘₐₓ
-        # Advance the solution along a path with full history.
-        for m in 1:vie.n-1
-            W = vie.W[vie.n-m+1]
-            f′[1] = vie.f′[3(m-1)+1]
-            f′[2] = vie.f′[3(m-1)+2]
-            f′[3] = vie.f′[3(m-1)+3]
-            for i in 1:3
-                for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
-                end
-            end
-        end
-    else  # vie.n > vie.Nₘₐₓ
-        # Advance the solution along a path with truncated history.
-        for m in 1:vie.Nₘₐₓ-1
-            W = vie.W[vie.Nₘₐₓ-m+1]
-            f′[1] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+1]
-            f′[2] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+2]
-            f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
-            for i in 1:3
-                for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
-                end
-            end
-        end
-    end
-
-    # Finally, solve A x′ = b′ for x′, i.e., solve the linear system.
-    for i in 1:3
-        sum = PhysicalVector(g′ₙ.array.cols, g′ₙ.units)
-        for j in 1:3
-            sum = sum + W₁inv[i,j] * b′[j]
-        end
-        vie.f′[3(vie.n-1)+i] = sum  # sum = x′[i]
-    end
-
+    # Solve a Volterra integral equation to get the response rate.
     n = get(vie.n)
-    # Integrate rate expressions describing the control and response functions.
-    vie.f[n+1] = (vie.f[n] + (vie.dt/8) *
-        (3vie.f′[3(n-1)+1] + 2vie.f′[3(n-1)+2] + 3vie.f′[3(n-1)+3]))
-    vie.g[n+1] = vie.g[n] + (vie.dt/8) * (3g′ₙ[1] + 2g′ₙ[2] + 3g′ₙ[3])
+    len = vie.f′.vector.len
+    sum = PhysicalVector(len, vie.f′.units)
+    for i in 1:n-2
+        for j in 1:len
+            sum[j] = sum[j] + vie.W[vie.N-i] * vie.f′[n-i,j]
+        end
+    end
+    for j in 1:len
+        vie.f′[n,j] = (g′ₙ[j] - cₙ*sum[j]) / (1 + cₙ*vie.W[vie.N])
+        vie.g′[n,j] = g′ₙ[j]
+    end
 
-    # Update the counter.
-    set!(vie.n, n+1)
+    # Integrate the differential equations governing control and response.
+    for j in 1:len
+        if vie.n == 2
+            vie.f[2,j] = vie.f[1,j] + 0.5vie.f′[2,j]*vie.dt
+            vie.g[2,j] = vie.g[1,j] + 0.5vie.g′[2,j]*vie.dt
+        elseif vie.n == 3
+            vie.f[3,j] = ((4/3)*vie.f[2,j] - (1/3)*vie.f[1,j]
+                + (2/3)*vie.f′[2,j]*vie.dt)
+            vie.g[3,j] = ((4/3)*vie.g[2,j] - (1/3)*vie.g[1,j]
+                + (2/3)*vie.g′[2,j]*vie.dt)
+        else
+            vie.f[n,j] = ((18/11)*vie.f[n-1,j] - (9/11)*vie.f[n-2,j]
+                + (2/11)*vie.f[n-3,j] + (6/11)*vie.f′[n,j]*vie.dt)
+            vie.g[n,j] = ((18/11)*vie.g[n-1,j] - (9/11)*vie.g[n-2,j]
+                + (2/11)*vie.g[n-3,j] + (6/11)*vie.g′[n,j]*vie.dt)
+        end
+    end
 
     return nothing
 end # advance!
@@ -1185,7 +1071,7 @@ end # advance!
 # Perform an iteration of refinement on a solution at current step n. Call only
 # if the control function g′ₙ or coefficient cₙ undergo iterative refinement.
 
-function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralVectorEquation, g′ₙ::PhysicalVector, cₙ::PhysicalScalar)
 
     set!(vie.n, get(vie.n)-1)
     advance!(vie, g′ₙ, cₙ)
@@ -1200,23 +1086,22 @@ end # update!
 
 struct VolterraIntegralTensorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    dt::PhysicalScalar          # distance separating global integration nodes
-    N::Integer                  # number of integration nodes in a solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    dt::PhysicalScalar          # distance separating neighboring solution nodes
+    N::Int64                    # number of integration nodes in a solution path
     n::MInteger                 # current node along a solution path
-    # Arrays of length N+1 holding integrated variable rates at the global nodes
+    # Arrays of length N+1 holding control and response fields, and their rates
     f::ArrayOfPhysicalTensors   # array of integrated response function values
+    f′::ArrayOfPhysicalTensors  # array of response function rates
     g::ArrayOfPhysicalTensors   # array of integrated control function values
+    g′::ArrayOfPhysicalTensors  # array of control function rates
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervalS
-    f′::ArrayOfPhysicalTensors  # history array of response function rates
-    # Array of Nₘₐₓ normalized weights of quadrature for a product integral
-    W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
+    # Array of N normalized weights of quadrature for a product integral
+    W::ArrayOfPhysicalScalars   # array holding the quadrature weights
 
     # constructors
 
     # For use when first creating this data structure.
-    function VolterraIntegralTensorEquation(systemOfUnits::String, N::Integer, dt::PhysicalScalar, f₀::PhysicalTensor, g₀::PhysicalTensor, W::ArrayOfPhysicalTensors)
+    function VolterraIntegralTensorEquation(systemOfUnits::String, N::Int64, dt::PhysicalScalar, f₀::PhysicalTensor, g₀::PhysicalTensor, W::ArrayOfPhysicalScalars)
 
         # Ensure that a consistent system of physical units is used.
         if (systemOfUnits == "SI") || (systemOfUnits == "si")
@@ -1240,34 +1125,42 @@ struct VolterraIntegralTensorEquation <: VolterraIntegralEquation
             msg = "The number of nodes N must be positive valued."
             throw(ErrorException(msg))
         end
-        if (𝑓₀.units ≠ 𝑔₀.units) || (𝑓₀.matrix.rows ≠ 𝑔₀.matrix.rows) || (𝑓₀.matrix.cols ≠ 𝑔₀.matrix.cols)
-            msg = "Units and dimensions for initial conditions f₀ and g₀ must be equal."
+        if 𝑓₀.units ≠ 𝑔₀.units
+            msg = "Physical units for initial conditions f₀ and g₀ must be equal."
             throw(ErrorException(msg))
         end
-        if !isDimensionless(𝑊) || (𝑊.array.rows ≠ 3) || (𝑊.array.cols ≠ 3)
-            msg = "Weights of quadrature W must be dimensionless 3x3 matrices."
+        if (𝑓₀.matrix.rows ≠ 𝑔₀.matrix.rows) || (𝑓₀.matrix.cols ≠ 𝑔₀.matrix.cols)
+            msg = "Dimensions of initial conditions, tensors f₀ and g₀, must equal."
+            throw(ErrorException(msg))
+        end
+        if !isDimensionless(𝑊)
+            msg = "Weights of quadrature W must be dimensionless."
             throw(ErrorException(msg))
         end
 
         # Create the fields for this data structure,
-        Nₘₐₓ = 𝑊.array.pgs
-        f = ArrayOfPhysicalTensors(N+1, 𝑓₀.matrix.rows, 𝑓₀.matrix.cols, 𝑓₀.units)
+        rows = 𝑓₀.matrix.rows
+        cols = 𝑓₀.matrix.cols
+        f  = ArrayOfPhysicalTensors(N+1, rows, cols, 𝑓₀.units)
         f[1] = 𝑓₀
-        g = ArrayOfPhysicalTensors(N+1, 𝑔₀.matrix.rows, 𝑔₀.matrix.cols, 𝑔₀.units)
+        f′ = ArrayOfPhysicalTensors(N+1, rows, cols, 𝑓₀.units-d𝑡.units)
+        g  = ArrayOfPhysicalTensors(N+1, rows, cols, 𝑔₀.units)
         g[1] = 𝑔₀
-        t = ArrayOfPhysicalScalars(N+1, t₀.units)
+        g′ = ArrayOfPhysicalTensors(N+1, rows, cols, 𝑔₀.units-d𝑡.units)
+        t  = ArrayOfPhysicalScalars(N+1, t₀.units)
         t[1] = t₀
         for n in 1:N
             t[n+1] = n * d𝑡
         end
-        f′ = ArrayOfPhysicalTensors(3N, 𝑓₀.matrix.rows, 𝑓₀.matrix.cols, 𝑓₀.units-d𝑡.units)
         n  = MInteger(1)
-        new(d𝑡, N, Nₘₐₓ, n, f, g, t, f′, 𝑊)
+
+        new(d𝑡, N, n, f, f′, g, g′, t, 𝑊)
     end
 
     # Used by JSON3 whenever this data structure is to be created from a file.
-    function VolterraIntegralTensorEquation(dt::PhysicalScalar, N::Integer, Nₘₐₓ::Integer, n::MInteger, f::ArrayOfPhysicalTensors, g::ArrayOfPhysicalTensors, t::ArrayOfPhysicalScalars, f′::ArrayOfPhysicalTensors, W::ArrayOfPhysicalTensors)
-        new(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    function VolterraIntegralTensorEquation(dt::PhysicalScalar, N::Int64, n::MInteger, f::ArrayOfPhysicalTensors, f′::ArrayOfPhysicalTensors, g::ArrayOfPhysicalTensors, g′::ArrayOfPhysicalTensors, t::ArrayOfPhysicalScalars, W::ArrayOfPhysicalScalars)
+
+        new(dt, N, n, f, f′, g, g′, t, W)
     end
 end # VolterraIntegralTensorEquation
 
@@ -1276,27 +1169,27 @@ end # VolterraIntegralTensorEquation
 function Base.:(copy)(vie::VolterraIntegralTensorEquation)::VolterraIntegralTensorEquation
     dt   = copy(vie.dt)
     N    = copy(vie.N)
-    Nₘₐₓ = copy(vie.Nₘₐₓ)
     n    = copy(vie.n)
     f    = copy(vie.f)
-    g    = copy(vie.g)
-    t    = copy(vie.t)
     f′   = copy(vie.f′)
+    g    = copy(vie.g)
+    g′   = copy(vie.g′)
+    t    = copy(vie.t)
     W    = copy(vie.W)
-    return VolterraIntegralTensorEquation(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    return VolterraIntegralTensorEquation(dt, N, n, f, f′, g, g′, t, W)
 end
 
 function Base.:(deepcopy)(vie::VolterraIntegralTensorEquation)::VolterraIntegralTensorEquation
     dt   = deepcopy(vie.dt)
     N    = deepcopy(vie.N)
-    Nₘₐₓ = deepcopy(vie.Nₘₐₓ)
     n    = deepcopy(vie.n)
     f    = deepcopy(vie.f)
-    g    = deepcopy(vie.g)
-    t    = deepcopy(vie.t)
     f′   = deepcopy(vie.f′)
+    g    = deepcopy(vie.g)
+    g′   = deepcopy(vie.g′)
+    t    = deepcopy(vie.t)
     W    = deepcopy(vie.W)
-    return VolterraIntegralTensorEquation(dt, N, Nₘₐₓ, n, f, g, t, f′, W)
+    return VolterraIntegralTensorEquation(dt, N, n, f, f′, g, g′, t, W)
 end
 
 StructTypes.StructType(::Type{VolterraIntegralTensorEquation}) = StructTypes.Struct()
@@ -1325,7 +1218,7 @@ end
 
 # Solver for advancing a solution step-by-step.
 
-function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::PhysicalTensor, cₙ::PhysicalScalar)
     if vie.n > vie.N
         println("The Volterra integral solution has reached its endpoint.")
         return nothing
@@ -1338,12 +1231,8 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalT
         msg = string(msg, "   f′  has units ", PhysicalFields.toString(vie.f′.units))
         throw(ErrorException(msg))
     end
-    if g′ₙ.array.pgs ≠ 3
-        msg = "The control function g′ₙ must contain 3 matrices."
-        throw(ErrorException(msg))
-    end
-    if (g′ₙ.array.rows ≠ vie.f′.array.rows) || (g′ₙ.array.cols ≠ vie.f′.array.cols)
-        msg = "The dimension of tensor g′ₙ must be that of tensor vie.f′."
+    if (g′ₙ.matrix.rows ≠ g′.array.rows) || (g′ₙ.matrix.cols ≠ g′.array.cols)
+        msg = "Tensor g′ₙ has the wrong dimensions."
         throw(ErrorException(msg))
     end
     if !isDimensionless(cₙ)
@@ -1351,72 +1240,47 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalT
         throw(ErrorException(msg))
     end
 
-    # Create the matrix coefficient for the right-hand side (rhs) product.
-    I = PhysicalTensor(3, 3, vie.W.units)
-    for i in 1:3
-        I[i,i] = PhysicalScalar(1.0, vie.W.units)
-    end
-    W₁ = vie.W[1]
-    W₁inv = inv(I + cₙ*transpose(W₁))
+    # update the counter
+    set!(vie.n, get(vie.n)+1)
 
-    # Create the temporary working arrays, which are of length 3.
-    b′ = ArrayOfPhysicalTensors(3, g′ₙ.array.rows, g′ₙ.array.cols, g′ₙ.units)
-    f′ = ArrayOfPhysicalTensors(3, g′ₙ.array.rows, g′ₙ.array.cols, g′ₙ.units)
-    x′ = ArrayOfPhysicalTensors(3, g′ₙ.array.rows, g′ₙ.array.cols, g′ₙ.units)
-
-    # Create the vector for the rhs product.
-
-    # First, add in the control contribution to the rhs vector.
-    for i in 1:3
-        b′[i] = g′ₙ[i]
-    end
-
-    # Second, incorporate the history effects acting on this rhs vector.
-    if vie.n ≤ vie.Nₘₐₓ
-        # Advance the solution along a path with full history.
-        for m in 1:vie.n-1
-            W = vie.W[vie.n-m+1]
-            f′[1] = vie.f′[3(m-1)+1]
-            f′[2] = vie.f′[3(m-1)+2]
-            f′[3] = vie.f′[3(m-1)+3]
-            for i in 1:3
-                for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
-                end
-            end
-        end
-    else  # vie.n > vie.Nₘₐₓ
-        # Advance the solution along a path with truncated history.
-        for m in 1:vie.Nₘₐₓ-1
-            W = vie.W[vie.Nₘₐₓ-m+1]
-            f′[1] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+1]
-            f′[2] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+2]
-            f′[3] = vie.f′[3(m+vie.n-vie.Nₘₐₓ-1)+3]
-            for i in 1:3
-                for j in 1:3
-                    b′[i] = b′[i] - cₙ * W[j,i] * f′[j]
-                end
-            end
-        end
-    end
-
-    # Finally, solve A x′ = b′ for x′, i.e., solve the linear system.
-    for i in 1:3
-        sum = PhysicalTensor(g′ₙ.array.rows, g′ₙ.array.cols, g′ₙ.units)
-        for j in 1:3
-            sum = sum + W₁inv[i,j] * b′[j]
-        end
-        vie.f′[3(vie.n-1)+i] = sum  # sum = x′[i]
-    end
-
+    # Solve a Volterra integral equation to get the response rate.
     n = get(vie.n)
-    # Integrate rate expressions describing the control and response functions.
-    vie.f[n+1] = (vie.f[n] + (vie.dt/8) *
-        (3vie.f′[3(n-1)+1] + 2vie.f′[3(n-1)+2] + 3vie.f′[3(n-1)+3]))
-    vie.g[n+1] = vie.g[n] + (vie.dt/8) * (3g′ₙ[1] + 2g′ₙ[2] + 3g′ₙ[3])
+    rows = vie.f′.matrix.rows
+    cols = vie.f′.matrix.cols
+    sum  = PhysicalTensor(rows, cols, vie.f′.units)
+    for i in 1:n-2
+        for j in 1:rows
+            for k in 1:cols
+                sum[j,k] = sum[j,k] + vie.W[vie.N-i] * vie.f′[n-i,j,k]
+            end
+        end
+    end
+    for j in 1:rows
+        for k in 1:cols
+            vie.f′[n,j,k] = (g′ₙ[j,k] - cₙ*sum[j,k]) / (1 + cₙ*vie.W[vie.N])
+            vie.g′[n,j,k] = g′ₙ[j,k]
+        end
+    end
 
-    # Update the counter.
-    set!(vie.n, n+1)
+    # Integrate the differential equations governing the control and response.
+    for j in 1:rows
+        for k in 1:cols
+            if vie.n == 2
+                vie.f[2,j,k] = vie.f[1,j,k] + 0.5vie.f′[2,j,k]*vie.dt
+                vie.g[2,j,k] = vie.g[1,j,k] + 0.5vie.g′[2,j,k]*vie.dt
+            elseif vie.n == 3
+                vie.f[3,j,k] = ((4/3)*vie.f[2,j,k] - (1/3)*vie.f[1,j,k]
+                    + (2/3)*vie.f′[2,j,k]*vie.dt)
+                vie.g[3,j,k] = ((4/3)*vie.g[2,j,k] - (1/3)*vie.g[1,j,k]
+                    + (2/3)*vie.g′[2,j,k]*vie.dt)
+            else
+                vie.f[n,j,k] = ((18/11)*vie.f[n-1,j,k] - (9/11)*vie.f[n-2,j,k]
+                    + (2/11)*vie.f[n-3,j,k] + (6/11)*vie.f′[n,j,k]*vie.dt)
+                vie.g[n,j,k] = ((18/11)*vie.g[n-1,j,k] - (9/11)*vie.g[n-2,j,k]
+                    + (2/11)*vie.g[n-3,j,k] + (6/11)*vie.g′[n,j,k]*vie.dt)
+            end
+        end
+    end
 
     return nothing
 end # advance!
@@ -1424,16 +1288,11 @@ end # advance!
 # Perform an iteration of refinement on a solution at current step n. Call only
 # if the control function g′ₙ or coefficient cₙ undergo iterative refinement.
 
-"""
-    update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
-
-TBW
-"""
-function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralTensorEquation, g′ₙ::PhysicalTensor, cₙ::PhysicalScalar)
 
     set!(vie.n, get(vie.n)-1)
     advance!(vie, g′ₙ, cₙ)
     return nothing
 end # update!
 
-end # module VolterraIntegralEquations
+end  # module VolterraIntegralEquations

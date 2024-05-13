@@ -1,3 +1,5 @@
+To view this file, use a markdown viewer that renders LaTeX commands, e.g., Apostrophe.
+
 # VolterraIntegralEquations
 
 This module provides a solver for Volterra integral equations of the second kind [13]. Specifically, this solver solves an integro-differential equation of the form

@@ -8,7 +8,7 @@ where the lower limit of integration is an initial time, taken to be 0, while th
 
 This equation becomes a Volterra integral equation of the first kind whenever $\boldsymbol{g}^{\prime}$ is $\boldsymbol{0}$.
 
-This Volterra integral equation describes an ordinary differential equation that, in turn, must be solved, i.e., it is an integro-differential equation. Here derivative $\boldsymbol{g}^{\prime} = \mathrm{d}\boldsymbol{g}/\mathrm{d}t$ is a known rate of some control function $\boldsymbol{g}$, while derivative $\boldsymbol{f}^{\prime} = \mathrm{d}\boldsymbol{f}/\mathrm{d}t$ is an unknown rate of a response function $\boldsymbol{f}$ to be solved for, whose evolution is characterized by a Volterra integral equation. Coefficient $c(t)$ and kernel $K(t-τ)$ are also taken to be known quantities.
+This Volterra integral equation describes an ordinary differential equation that, in turn, must be solved, i.e., it is an integro-differential equation. Here derivative $\boldsymbol{g}^{\prime} = \mathrm{d}\boldsymbol{g}/\mathrm{d}t$ is a known rate for some control function $\boldsymbol{g}$, while derivative $\boldsymbol{f}^{\prime} = \mathrm{d}\boldsymbol{f}/\mathrm{d}t$ is an unknown rate for a response function $\boldsymbol{f}$ that is to be determined, whose evolution is characterized by a Volterra integral equation. Coefficient $c(t)$ and kernel $K(t-τ)$ are also taken to be known quantities.
 
 Functions $\boldsymbol{f}$ and $\boldsymbol{g}$ have the same physical units. They may be scalars, vectors or tensors in stature. Coefficient $c$ is a dimensionless, scalar-valued function. Kernel $K$ is a memory function, which is the derivative of a generalized creep function. It is a scalar-valued function with physical units of $t^{-1}$, e.g., reciprocal time whenever $t$ has units of time.
 
@@ -20,7 +20,7 @@ Pkg.add(url = "https://github.com/AlanFreed/PhysicalFields.jl")
 Pkg.add(url = "https://github.com/AlanFreed/VolterraIntegralEquations.jl")
 ```
 
-This software was written to accompany a book the authors are writing [7].
+This software was written to accompany a book being written by the authors of this software [7].
 
 ## Example: A Viscoelastic Fiber
 
@@ -32,7 +32,7 @@ $$
 	\int_0^t K (t - \tau) \, \frac{\mathrm{d} \sigma}{\mathrm{d}\tau} \,
 	\mathrm{d}\tau \right)
 $$
-where $\sigma$ is stress and $\epsilon$ is strain, and where $\mathcal{E}$,  $E_{\infty}$, and $E_0$ are its local tangent, rubbery, and glassy elastic moduli, respectively, the former being a possible function of time, while the latter two are material constants. Kernel $K$ is a positive, monotonic-decreasing function known as a memory function whose units are reciprocal time.  The first term on the right-hand side of the above equation provides for a glassy elastic change in stress that is attenuated by the second term, which introduces a viscous loss to this change in stress.
+where $\sigma$ is stress and $\epsilon$ is strain, and where $\mathcal{E}$,  $E_{\infty}$, and $E_0$ are its tangent, rubbery, and glassy elastic moduli, respectively, the former being a possible function of time, while the latter two are material constants. Kernel $K$ is a positive, monotonic-decreasing function known as a memory function whose units are reciprocal time.  The first term on the right-hand side of the above equation provides for a glassy elastic change in stress that is attenuated by the second term, which introduces a viscous loss to this change in stress.
 
 The elastic tangent modulus $\mathcal{E}$ for a linear Hookean fiber is
 $$
@@ -44,7 +44,7 @@ In contrast, for a nonlinear biologic fiber, its tangent modulus associates with
 $$
 \frac{1}{\mathcal{E}} = \frac{1}{E_0} + \frac{\beta}{E_r \beta + 2(\sigma - \sigma_r)} \sqrt{\frac{\beta E_r}{\beta E_r + 2(\sigma - \sigma_r)}}
 $$
-wherein $\sigma_r$ denotes a residual stress, and $\beta$ designates a limiting state for an internal strain, a strain caused by molecular reconfiguration.  The elastic tangent modulus associated with a fiber's strain-free reference configuration is designated as $E_r$ ($> 0$). Within a biologic fiber's linear region of response, wherein strain is caused by molecular stretching, moduli $E_\infty$ ($> E_r$) and $E_0$ ($> E_{\infty}$) denote its rubbery and glassy moduli, respectively. The resulting elastic tangent modulus $\mathcal{E}$ is thereby bounded by $E_r$ from below and $E_0$ from above.
+wherein $\sigma_r$ denotes a residual stress, and $\beta$ designates a limiting state for an internal strain, a strain caused by molecular reconfiguration.  The elastic tangent modulus associated with a fiber's strain-free reference configuration is designated as $E_r$ ($> 0$). Within a biologic fiber's linear region of response, wherein strain is caused by molecular stretching, moduli $E_\infty$ ($> E_r$) and $E_0$ ($> E_{\infty}$) denote its rubbery and glassy elastic moduli, respectively. The resulting elastic tangent modulus $\mathcal{E}$ is thereby bounded by $E_r$ from below and $E_0$ from above.
 
 ### Volterra Functions
 
@@ -68,7 +68,7 @@ which is a modulus-scaled strain rate.
 
 ## Memory Functions
 
-A selection of positive, monotonic-decreasing, viscoelastic, memory functions $K(t)$, whose units are reciprocal time, have been preprogrammed into this software. These are representative of the many kernel functions that have been proposed in the literature. These memory functions are the derivatives of creep functions, the latter of which are more commonly found in the literature. Consequently, these characteristic times associate with creep (not stress relaxation). See Freed [6,8] for a discussion of these functions.
+A selection of positive, monotonic-decreasing, viscoelastic, memory functions $K(t)$, whose units are reciprocal time, have been preprogrammed into this software. These are representative of the many kernel functions that have been proposed in the literature. These memory functions are the derivatives of creep functions, the latter of which are more commonly found in the literature. Consequently, their characteristic times associate with creep (not stress relaxation). See Freed [6,8] for a discussion of these functions.
 
 1) **BOX**: the *𝑏𝑜𝑥* energy dissipation model of Neuber [12], a.k.a. Fung's [9] **Q**uasi-**L**inear **V**iscoelastic (QLV) kernel, has a memory function of
 $$
@@ -93,7 +93,7 @@ K(t) = -\frac{E_{\alpha,0} \left( - \left( t / \tau \right)^{\alpha} \right)}{t}
 \quad \text{with} \quad
 K(0) = \infty
 $$
-wherein $\tau$ is a characteristic time, and $\alpha \in (0, 1]$ is a fractional order of evolution, with $E_{\alpha,\beta}(t)$ being the two-parameter Mittag-Leffler function. The FLS model contains the SLS model as a special case; specifically, they are equivalent whenever $\alpha = 1$. Mainardi's memory kernel is weakly singular.
+wherein $\tau$ is a characteristic time, and $\alpha \in (0, 1]$ is a fractional order of evolution, with $E_{\alpha,\beta}(t)$ being the two-parameter Mittag-Leffler function. The FLS model contains the SLS model as a special case; specifically, they become equivalent whenever $\alpha = 1$. Mainardi's memory kernel is weakly singular whenever $\alpha \in (0,1)$.
 
 4) **KWW**: **K**ohlrausch's [10] and **W**illiams & **W**atts' [14] stretched exponential has a memory function of
 $$
@@ -102,7 +102,7 @@ K(t) = \alpha \, \left( \frac{t}{\tau} \right)^{\alpha} \;
 \quad \text{with} \quad
 K(0) = \infty
 $$
-wherein $\tau$ is a characteristic time and $\alpha \in (0,1]$ is an exponent for the power of the argument in the exponential. The KWW model contains the SLS model as a special case; specifically, they are equivalent whenever $\alpha = 1$. The KWW memory kernel is weakly singular whenever $\alpha \in (0,1)$.
+wherein $\tau$ is a characteristic time and $\alpha \in (0,1]$ is an exponent for the power of the argument in the exponential. The KWW model contains the SLS model as a special case; specifically, they become equivalent whenever $\alpha = 1$. The KWW memory kernel is weakly singular whenever $\alpha \in (0,1)$.
 
 5) **MCM**: **M**axwell's **C**hain **M**odel, a.k.a. the Prony series model, has a memory function of
 $$
@@ -132,7 +132,7 @@ $$
 \frac{\delta}{\tau} = -E_{\alpha,0} \left( - \left( 
 \frac{\delta}{\tau} \right)^{\alpha}\right)
 $$
-which effectively shifts the singularity of an FLS kenel a short distance into negative time so the RFS creep compliance equates with the SLS creep compliance at time 0. As a consequence, the RFS memory kernel is finite valued throughout its domain of application.
+which effectively shifts the singularity of an FLS kenel a short distance into negative time so that the RFS creep compliance equates with the SLS creep compliance at time 0. As a consequence, the RFS memory kernel is finite valued throughout its domain of application.
 
 8) **SLS**: Zener's [17] **S**tandard **L**inear **S**olid has a Maxwell-Debye kernel resulting in a memory function of
 $$
@@ -142,11 +142,15 @@ K(0) = \frac{1}{\tau}
 $$
 wherein $\tau$ is a characteristic time.
 
-A capability is provided in this software for the user to define and use their own memory function, too, if it is other than one of those listed above.
+A capability is also provided in this software for the user to be able to define and use their own memory function, if it is other than one of those listed above.
 
 ## Numerical Method
 
-This solver implements a numerical method developed in an appendix of a book that is currently being written by the authors of this software [6]. It builds upon another numerical method developed by Young [16] which comes from the actuarial sciences literature.
+This solver implements a numerical method developed in an appendix of a book that is currently being written by the authors of this software [6].
+
+In practice, global solutions to such integral equations are gotten at sequential instants in time.  In our case, given an initial time $t_0 = 0$, solutions are sought at times $t_1, t_2, \ldots, t_N$ \mbox{($t_0 < t_1 < t_2 < \cdots < t_N$)} of which there are $N$ solutions to be gotten.  These global instants are taken to be uniformly spaced in time, separated by a time increment of $\mathrm{d} t$ such that $t_n = t_{n-1} + \mathrm{d}t$ for all $n = 1, 2, \ldots, N$.
+
+It is sufficient for our purposes to consider quadrature nodes $t_n$ that are of adequate density so as to minimize the method's approximation error. To assess if a given nodal density is adequate in this regard, multiple solutions with different nodal densities ought to be acquired, whose errors of approximation converge with increasing nodal density.
 
 Solutions to Volterra integrals of the second kind can be advanced through a block-by-block algorithmic strategy of
 $$
@@ -154,6 +158,9 @@ $$
 $$
 $$
 \boldsymbol{f}^{\prime}(t_2) = \boldsymbol{g}^{\prime}(t_2) - c(t_2) \int_{0}^{t_2} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau 
+$$
+$$
+\boldsymbol{f}^{\prime}(t_3) = \boldsymbol{g}^{\prime}(t_3) - c(t_3) \int_{0}^{t_3} K(t_3 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau 
 $$
 $$
 \vdots
@@ -168,6 +175,9 @@ $$
 \boldsymbol{g}(t_0) = \boldsymbol{g}_0
 $$
 that, from the fundamental theorem of calculus, can be rewritten as
+$$
+\boldsymbol{f}^{\prime}(t_1) = \boldsymbol{g}^{\prime}(t_1) - c(t_1) \int_{0}^{t_1} K(t_1 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau
+$$
 $$
 \begin{aligned}
 \boldsymbol{f}^{\prime}(t_2) & = \boldsymbol{g}^{\prime}(t_2) - c(t_2) \int_{0}^{t_1} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau \\
@@ -187,198 +197,91 @@ $$
 $$
 \vdots
 $$
-wherein, e.g., the product integral $\int_{0}^{t_1} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time $t_2$ lies outside the interval of integration, in this case $[0, t_1]$, over which time $\tau$ spans, while the product integral $\int_{t_1}^{t_2} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time, in this case $t_2$, is now the upper limit of integration. These two integrals will have different rules of quadrature representing them.
+$$
+\begin{aligned}
+\boldsymbol{f}^{\prime}(t_N) & = \boldsymbol{g}^{\prime}(t_N) - c(t_N) \int_{0}^{t_1} K(t_N - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau \\
+& \phantom{\= \boldsymbol{g}^{\prime}(t_N)} \; - c(t_N)
+        \int_{t_1}^{t_2} K(t_N - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau \\
+& \phantom{= \boldsymbol{g}^{\prime}(t_N) -} \vdots \\
+& \phantom{= \boldsymbol{g}^{\prime}(t_N)} \; - c(t_N)
+        \int_{t_{N-1}}^{t_N} K(t_N - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau
+\end{aligned}
+$$
+wherein, e.g., the product integral $\int_{0}^{t_1} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time $t_2$ lies outside the interval of integration, in this case $[0, t_1]$, over which time $\tau$ spans, while the product integral $\int_{t_1}^{t_2} K(t_2 - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau$ has a kernel $K$ whose fixed time, in this case $t_2$, is now the upper limit of integration. The first of these two integrals is called a Fredholm integral, while the latter is called a Volterra integral.
 
 ### Quadrature Rule
 
-Many of the memory kernels used in practice are weakly singular in that they become unbounded at the upper limit of integration. Braß [1] has shown that open quadrature methods (those that do not contain the interval's endpoints as nodes of quadrature, and therefore avoid its singularity) have error functions that converge; whereas, every closed quadrature method (those that contain the singular point) has an error function that diverges. Consequently, open quadrature methods must be used to approximate such integrals, like the method being considered here.
+The convolution integrals in the above Volterra integral equations are treated as product integrals [16], a product between a forcing function and a kernel function, that are considered to obey the following system of implicit equations
+$$
+\begin{aligned}
+& \boldsymbol{f}^{\prime}_1 = \boldsymbol{g}^{\prime}_1 - c_1 \left( W_N \boldsymbol{f}^{\prime}_1 + \boldsymbol{\epsilon}_1 \right) \\
+& \boldsymbol{f}^{\prime}_2 = \boldsymbol{g}^{\prime}_2 - c_2 \left( W_N \boldsymbol{f}^{\prime}_2 + W_{N-1} \boldsymbol{f}^{\prime}_1 + \boldsymbol{\epsilon}_2 \right) \\
+& \boldsymbol{f}^{\prime}_3 = \boldsymbol{g}^{\prime}_3 - c_3 \left( W_N \boldsymbol{f}^{\prime}_3 + W_{N-1} \boldsymbol{f}^{\prime}_2 + W_{N-2} \boldsymbol{f}^{\prime}_1 + \boldsymbol{\epsilon}_3 \right) \\
+& \phantom{= \boldsymbol{f}^{\prime}_3} \!\vdots \\
+& \boldsymbol{f}^{\prime}_N = \boldsymbol{g}^{\prime}_N - c_N \left( W_N \boldsymbol{f}^{\prime}_N + W_{N-1} \boldsymbol{f}^{\prime}_{N-1} + \cdots + W_1 \boldsymbol{f}^{\prime}_1 + \boldsymbol{\epsilon}_N \right)
+\end{aligned}
+$$
+where $W_n$ is the weight of quadrature at step $n$, $n = 1, 2, \ldots , N$, in the last step of integration $N$, whose approximation error is $\boldsymbol{\epsilon}_n$. 
 
-There are product integrals of the Fredholm type, viz.,
+Assuming the nodal density to be sufficiently large so that the errors of approximation $\boldsymbol{\epsilon}_n$ can be safely neglected, then upon rearranging these expressions one gets
 $$
-\int_{t_{l-1}}^{t_l} K(t_n - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d}\tau =
-	\sum_{j=1}^J W_j (K, \mathrm{d}t) \, \boldsymbol{f}^{\prime}(t_{l-1} + t_j)  + \boldsymbol{\varepsilon}
+\begin{aligned}
+& \boldsymbol{f}^{\prime}_1 = (1 + c_1 W_N)^{-1} \boldsymbol{g}^{\prime}_1 \\
+& \boldsymbol{f}^{\prime}_2 = (1 + c_2 W_N)^{-1} \left( \boldsymbol{g}^{\prime}_2 - c_2 W_{N-1} \boldsymbol{f}^{\prime}_1 \right) \\
+& \boldsymbol{f}^{\prime}_3 = (1 + c_3 W_N)^{-1} \left( \boldsymbol{g}^{\prime}_3 - c_3 \left( W_{N-1} \boldsymbol{f}^{\prime}_2 + W_{N-2} \boldsymbol{f}^{\prime}_1 \right) \right) \\
+& \phantom{= \boldsymbol{f}^{\prime}_3} \!\vdots \\
+& \boldsymbol{f}^{\prime}_N = (1 + c_N W_N)^{-1} \left(\boldsymbol{g}^{\prime}_N - c_N \left( W_{N-1} \boldsymbol{f}^{\prime}_{N-1} + W_{N-2} \boldsymbol{f}^{\prime}_{N-2} + \cdots + W_1 \boldsymbol{f}^{\prime}_1 \right) \right)
+\end{aligned}
 $$
-where $l = 0,1,2, \ldots, n \! - \! 1,$ with $t_j \in (0, \mathrm{d}t)$ representing the $J$ local nodes of quadrature for a selected integration rule, which are taken to be an open set over the interval, while recalling that $\mathrm{d}t = t_l - t_{l-1}$. Here $W_j$ denotes a weight of quadrature for which $\boldsymbol{\varepsilon}$ is its local truncation error.
+where each integral above is taken to obey a product quadrature rule [16] of
+$$
+\int_{t_{n-1}}^{t_n} K (t_N - \tau) \, \boldsymbol{f}^{\prime} ( \tau ) \, \mathrm{d} \tau = W_n f^{\prime}_n + \boldsymbol{\epsilon}_n
+$$
+with an approximation error of $\boldsymbol{\epsilon}_n$. All functions are to be evaluated at the end point $t_n = n \, \mathrm{d}t$ of each local integration in that
+$$
+c_n = c(t_n) , \quad \boldsymbol{f}^{\prime}_n = \boldsymbol{f}^{\prime} (t_n) \quad \text{and} \quad \boldsymbol{g}^{\prime}_n = \boldsymbol{g}^{\prime}(t_n)
+$$
+which is consistent with the fact that the solution $\boldsymbol{f}^{\prime}_N$ is evaluated at the upper limit of integration. 
 
-There are also product integrals of the Volterra type, viz.,
+The weights of quadrature are described by integrals, specifically
 $$
-\int_{t_{n-1}}^{t_n} K(t_n - \tau) \, \boldsymbol{f}^{\prime}(\tau) \, \mathrm{d} \tau = \sum_{j=1}^J W_j (K, \mathrm{d}t) \, \boldsymbol{f}^{\prime}(t_{n-1} + t_j) + \boldsymbol{\varepsilon}
+W_n = \int_{t_{n-1}}^{t_n} K ( t_N - \tau ) \, \mathrm{d} \tau
 $$
-where the upper limit of integration $t_n$ now appears as an argument in the kernel function $K$.
+that upon adopting the transformation
+$$
+\int_a^b \phi (x) \, \mathrm{d}x = \frac{b-a}{2} \int_{-1}^1 \phi \left( \tfrac{b-a}{2} \xi + \tfrac{a+b}{2} \right) \mathrm{d} \xi
+$$
+place the above integrals for quadrature into Gauss' form $\int_{-1}^1 f(x) \, \mathrm{d}x = \sum_{s=1}^S w_s f(\xi_s) + \epsilon$, thereby resulting in the following formula for our weights of quadrature
+$$
+W_n = \frac{\mathrm{d}t}{2} \sum_{s=1}^S w_s K \Bigl( \bigl( N - \tfrac{1}{2} ( 2n - 1 + \xi_s ) \bigr) \mathrm{d} t \Bigr)
+$$
+where $w_s$ and $\xi_s$ are the weights and nodes of Gauss' quadrature rule, see the table below. For our application, we choose $S=4$ whenever $t_n < \tfrac{1}{2} \tau$, $S=3$ whenever $\tfrac{1}{2} \tau \le t_n < 2\tau$, $S=2$ whenever $2\tau \le t_n , 5\tau$, and $S=1$ whenever $t_n \ge 5\tau$, where $\tau$ is the characteristic time for kernel $K$.
 
-These two quadrature rules result in similar, but different, formula for their weights of quadrature.
+| $S=$ | $w_s=$ | $\xi_s =$ |
+| --- | --- | --- |
+| 1 | $\{ 2 \}$ | $\{ 0 \}$ |
+| 2 | $\{ 1, 1 \}$ | $\{ -\sqrt{1/3} , \sqrt{1/3} \}$ |
+| 3 | $\{ 5/9 , 8/9 , 5/9 \}$ | $\{ -\sqrt{3/5} , 0, \sqrt{3/5} \}$ |
 
-In practice, it is considered that the global interval of integration $\mathrm{d}t$ is sufficiently small so that its local truncation error $\boldsymbol{\varepsilon}$ can be safely neglected. Even so, the user ought to be cognizant of this consideration whenever one is assessing the validity of one's solution. A theorem by Braß [1] assures that the error converges with a refinement of nodal mesh density, and therefore, the solution converges, too.
+Table: Gauss' weights $w_s$ and nodes $\xi_s$ of quadrature for the numerical integration of integral $\int_{-1}^1 f(x) \, \mathrm{d}x = \sum_{s=1}^S w_s f(\xi_s) + \epsilon$. 
 
-### Block-by-Block Solution Strategy
-
-Solutions to Volterra integral equations of the second kind take on the form of a sequentially solved linear equation
-$$
-\boldsymbol{f}^{\prime}_{n} = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_{\!1} \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{\!n-m+1} \boldsymbol{f}^{\prime}_{m} \right) ,
-\qquad n = 1, 2, \ldots, N
-$$
-where $N$ specifies the number of global integration steps, called nodes, that are required to traverse a solution's path, whose weights of quadrature are $\boldsymbol{W}_n$, with weight $\boldsymbol{W}_1$ being distinct in form from all the others. In order for this algorithm to work, it is necessary that the $J \times J$ matrix $\boldsymbol{I} + c_n \boldsymbol{W}_1^{\mathsf{T}}$ not be singular so that its inverse exists, with $c_n = c(t_n)$. 
-
-For the method implemented here, there are three local nodes of integration per single global node, i.e., $J = 3$, and as such, the control function $\boldsymbol{g}^{\prime}_n$ and the forcing function $\boldsymbol{f}^{\prime}_n$ are each arrays of length 3, while the weights of quadrature $\boldsymbol{W}_n$ are $3 \times 3$ matrices. Specifically, an open, mid-point, quadrature rule is selected wherein
-$$
-t_j = \{ \tfrac{1}{6} \mathrm{d}t , \tfrac{1}{2} \mathrm{d}t , \tfrac{5}{6} \mathrm{d}t \}
-$$
-so that
-$$
-\boldsymbol{f}^{\prime}_n = \left\{ \begin{matrix}
-\boldsymbol{f}^{\prime}(t_{n,1}) \\
-\boldsymbol{f}^{\prime}(t_{n,2}) \\
-\boldsymbol{f}^{\prime}(t_{n,3}) \\
-\end{matrix} \right\}
-= \left\{ \begin{matrix}
-\boldsymbol{f}^{\prime}(t_{n-1} \! + \! \tfrac{1}{6} \mathrm{d}t) \\
-\boldsymbol{f}^{\prime}(t_{n-1} \! + \! \tfrac{1}{2} \mathrm{d}t) \\
-\boldsymbol{f}^{\prime}(t_{n-1} \! + \! \tfrac{5}{6} \mathrm{d}t) \\
-\end{matrix} \right\}
-$$
-and
-$$
-\boldsymbol{g}^{\prime}_n = \left\{ \begin{matrix}
-\boldsymbol{g}^{\prime}(t_{n,1}) \\
-\boldsymbol{g}^{\prime}(t_{n,2}) \\
-\boldsymbol{g}^{\prime}(t_{n,3}) \\
-\end{matrix} \right\}
-= \left\{ \begin{matrix}
-\boldsymbol{g}^{\prime}(t_{n-1} \! + \! \tfrac{1}{6} \mathrm{d}t) \\
-\boldsymbol{g}^{\prime}(t_{n-1} \! + \! \tfrac{1}{2} \mathrm{d}t) \\
-\boldsymbol{g}^{\prime}(t_{n-1} \! + \! \tfrac{5}{6} \mathrm{d}t) \\
-\end{matrix} \right\}
-$$
-with weights of quadrature being described by
-$$
-\boldsymbol{W}_n = \boldsymbol{X}^{-1} \boldsymbol{\mu}_n
-\quad \text{wherein} \quad
-\boldsymbol{X} = 
-\begin{bmatrix}
-1 & 1 & 1 \\
--1 & 0 & 1 \\
-1 & 0 & 1
-\end{bmatrix}
-\quad \text{so} \quad
-\boldsymbol{X}^{-1} = \frac{1}{2} \begin{bmatrix}
-0 & -1 & 1 \\
-2 & 0 & -2 \\
-0 & 1 & 1
-\end{bmatrix}
-$$
-where $\boldsymbol{X}$ is a Vandermonde matrix (Young [16] calls it the alternant matrix) and $\boldsymbol{\mu}_n$ is the $n^{\text{th}}$ moment matrix, which are consequences of expressing $\boldsymbol{f}^{\prime}$ in a Taylor series expanded about the midpoint to its local span of integration.
-
-The global nodes of integration associate with times $t_n$ where $t_n = t_{n-1} + \mathrm{d}t \; \forall \; n$ given $t_0 = 0$, with $\mathrm{d}t$ being a distance separating neighboring global nodes. The local nodes of integration associate with times $t_{n,j}$ where $j = 1,2,3$ such that $t_{n,1} = t_{n-1} + \tfrac{1}{6} \mathrm{d}t$, $t_{n,2} = t_{n-1} + \tfrac{1}{2} \mathrm{d}t$ and $t_{n,3} = t_{n-1} + \tfrac{5}{6} \mathrm{d}t$, with a distance of $\tfrac{1}{3} \mathrm{d}t$ separating neighboring local nodes. These local nodes do not contain any global nodes, i.e., it uses an open quadrature method. Consequently, this solution strategy can, in principle, be applied to kernels that are singular at the upper limit of integration (like memory kernels: CCM, FLS and KWW).
-
-### Moment Matrices
-
-A large expense in implementing this numerical method is in the computation of its moment matrices. Fortunately, once gotten they can be reused in future solutions. There is a more efficient algorithm for implementing an exponential kernel that is based upon its recursive property [6], but that algorithm is restricted to that kernel alone. The algorithm presented below is applicable to all types of kernel functions, and is therefore versatile.
-
-The moment matrices are solutions to integral equations. For $n=1$, moment $\boldsymbol{\mu}_1$ describes a $3 \times 3$ matrix whose elements are solutions to the Volterra integral
-$$
-\mu_{ij,1} = \frac{1}{h^{i-1}} \int_0^{(j - 1/2)h} \bigl( \tau - \tfrac{1}{2} (j - 1/2) h \bigr)^{i-1} \, K \bigl( (j - 1/2) h - \tau \bigr) \, \mathrm{d} \tau
-$$
-where $h = \tfrac{1}{3} \mathrm{d}t$ and $i,j=1,2,3$. The remaining moment matrices $\boldsymbol{\mu}_n$, where $n=2, 3, \ldots, N$, describe $3 \times 3$ matrices whose elements are solutions to the Fredholm integral
-$$
-\mu_{ij,n} = \frac{1}{h^{i-1}} \int_0^{\mathrm{d}t} \bigl( \tau - \tfrac{1}{2} \mathrm{d}t \bigr)^{i-1} \, K \bigl( (n-1) \mathrm{d}t + (j - 1/2) h - \tau \bigr) \, \mathrm{d} \tau
-$$
-These are integrals of the kernel function $K$ scaled by moment arms measured from the midpoints of their spans of integration. These moment arms are raised to powers of $i \! - \! 1$. They arise because of the Taylor series expansion imposed.
-
-#### Gauss Quadrature
-
-Employing Gauss' quadrature rule
-$$
-\int_0^t \mathfrak{f}(\tau) \, \mathrm{d}\tau = \frac{t}{2} \int_{-1}^1 \mathfrak{f} \bigl( \tfrac{t}{2} ( 1 + x ) \bigr) \, \mathrm{d} x \approx \frac{t}{2} \sum_{s=1}^S w_s \, \mathfrak{f} \bigl( \tfrac{t}{2} ( 1 + x_s ) \bigr)
-$$
-to the above moment integrals, selecting $S=3$, produces weights $w_s$ and nodes $x_s$ of quadrature
-$$
-w_s = \left\{ 5/9, \, 8/9, \, 5/9 \right\}^{\mathsf{T}}
-\quad \text{and} \quad
-x_s = \left\{ -\sqrt{3/5} , \, 0 , \, \sqrt{3/5} \right\}^{\mathsf{T}}
-$$
-Consequently, the first moment $\boldsymbol{\mu}_1$ is approximated by a quadrature rule of
-$$
-\mu_{ij,1} = \frac{(j \! - \! 1/2) \, \mathrm{d}t}{6} \sum_{s=1}^3 w_s m_{ij,s} K \left( \tfrac{1}{6} (j \! - \! 1/2) (1 \! - \! x_s)^{\vphantom{|}} \mathrm{d}t \right) , \quad i,j = 1,2,3
-$$
-wherein, for $s=1$
-$$
-m_{ij,1} = \begin{bmatrix}
-	1 & 1 & 1 \\
-	-\sqrt{3/80} & -\sqrt{27/80} & -\sqrt{15/16} \\
-	3/80 & 27/80 & 15/16
-\end{bmatrix}
-$$
-while, for $s=2$
-$$
-m_{ij,2} = \begin{bmatrix}
-	1 & 1 & 1 \\
-	0 & 0 & 0 \\
-	0 & 0 & 0
-\end{bmatrix} 
-$$
-where the zeros follow because $x_2$ resides at the midpoint, i.e., it has no moment arm, and for $s=3$
-$$
-m_{ij,3} = \begin{bmatrix}
-	1 & 1 & 1 \\
-	\sqrt{3/80} & \sqrt{27/80} & \sqrt{15/16} \\
-	3/80 & 27/80 & 15/16
-\end{bmatrix}
-$$
-Similarly, the remaining moments $\boldsymbol{\mu}_n$, $n = 2,3,\ldots,N$, are approximated by a quadrature rule of
-$$
-\mu_{ij,n} = \frac{\mathrm{d}t}{2} \sum_{s=1}^3 w_s v_{i,s} K \left( \bigl( n - \tfrac{1}{3} (5 - j) - \tfrac{1}{2} x_s \bigr)^{\vphantom{|}} \mathrm{d}t \right) , \quad i,j = 1,2,3
-$$
-wherein, for $s=1$
-$$
-v_{i,1} = \left\{ 1 , \, -\sqrt{27/20} , \, 27/20 \right\}^{\mathsf{T}}
-$$
-while, for $s=2$
-$$
-v_{i,2} = \left\{ 1, \, 0, \, 0 \right\}^{\mathsf{T}}
-$$
-and, for $s=3$
-$$
-v_{i,3} = \left\{ 1 , \, \sqrt{27/20} , \, 27/20 \right\}^{\mathsf{T}} 
-$$
-that collectively weigh an effect caused by the moment arms within a Taylor expansion.
-
-### History Truncation
-
-For those kernels $K$ that are monotonic-decreasing functions, a number $N_{\max}$ exists beyond which point memory of the past effectively fades away. How one assigns $N_{\max}$ will depend upon the kernel $K$ (specifically, its characteristic time), the global step size $\mathrm{d}t$, and the accuracy sought in a solution. Considering that such an $N_{\max}$ exists, then, for integration steps where $n \le N_{\max}$, a solution $\boldsymbol{f}^{\prime}_n$ advances along its path according to the linear equation
-$$
-\boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{n-1} \boldsymbol{W}^{\mathsf{T}}_{n-m+1} \boldsymbol{f}^{\prime}_{m} \right)
-$$
-that whenever $n > N_{\max}$ will continue to advance along its path, but now according to the linear equation
-$$
-\boldsymbol{f}^{\prime}_n = \Bigl( \boldsymbol{I} + c_n \boldsymbol{W}^{\mathsf{T}}_1 \Bigr)^{-1} \left( \boldsymbol{g}^{\prime}_n - c_n \sum_{m=1}^{N_{\max}-1} \boldsymbol{W}^{\mathsf{T}}_{N_{\max}-m+1} \boldsymbol{f}^{\prime}_{m+n-N_{\max}} \right)
-$$
-which removes forcing functions from $\boldsymbol{f}^{\prime}_1$ through $\boldsymbol{f}^{\prime}_{n-N_{\max}}$ from its summation history. These memories are considered to be so distant that they have effectively been forgotten.
+It is noteworthy to point out that Gauss' method of integration does not incorporate an evaluation of its kernel $K$ at the upper limit of integration, viz., at $t_N = N \, \mathrm{d}t$, where some kernels of interest become singular. Consequently, the error of approximation for this integrator will converge to a finite value with decreasing step size. [1]
 
 ## Solving the Resulting Differential Equations
 
-Here a Volterra integral equation of the second kind, whose method of solution has just been laid out, describes a differential equation whose solution is sought. Specifically, the control $\boldsymbol{g}^{\prime}$ and response $\boldsymbol{f}^{\prime}$ rate functions can both be integrated using a Newton-Cotes formula of the form
+Here a Volterra integral equation of the second kind, whose method of solution has just been laid out, describes a differential equation whose solution is sought. Specifically, the control $\boldsymbol{g}^{\prime}$ and response $\boldsymbol{f}^{\prime}$ functions are differential equations that are integrated here using a Backward Difference Formula (BDF), e.g., given an initial condition of $\boldsymbol{f}_0 = \boldsymbol{f}(t_0)$, one starts off with
 $$
-\boldsymbol{g}_{n} = \boldsymbol{g}_{n-1} + \frac{\mathrm{d}t}{8} \left( 3 \boldsymbol{g}^{\prime} (t_{n,1}) + 2 \boldsymbol{g}^{\prime} (t_{n,2})+ 3 \boldsymbol{g}^{\prime} (t_{n,3}) \right)
+\boldsymbol{f}_1 = \boldsymbol{f}_0 + \tfrac{1}{2} \boldsymbol{f}^{\prime}_1 \, \mathrm{d} t \quad \text{for} \; n = 1
 $$
-and
+and then, for the second step, one advances the solution with
 $$
-\boldsymbol{f}_{n} = \boldsymbol{f}_{n-1} + \frac{\mathrm{d}t}{8} \left( 3 \boldsymbol{f}^{\prime} (t_{n,1}) + 2 \boldsymbol{f}^{\prime} (t_{n,2})+ 3 \boldsymbol{f}^{\prime} (t_{n,3}) \right)
+\boldsymbol{f}_2 = \tfrac{4}{3} \boldsymbol{f}_1 - \tfrac{1}{3} \boldsymbol{f}_0 + \tfrac{2}{3} \boldsymbol{f}^{\prime}_2 \, \mathrm{d}t \quad \text{for} \; n = 2
 $$
-with the $\boldsymbol{g}^{\prime}$ being known and the $\boldsymbol{f}^{\prime}$ being solutions to a Volterra integral equation. Time $t_{n}$ associates with the next global node of integration, while times $t_{n,j} = t_{n-1} + (\tfrac{1}{6} + \tfrac{1}{3}(j-1)) \mathrm{d}t$, $j=1,2,3$, associate with the three local nodes of integration spanning $[t_{n-1} , t_{n}]$.
-
-There are applications where the control function may depend upon either or both the control and/or response functions, e.g., the biologic fiber model in the viscoelastic example described above, in which case one will also need solutions to be gotten at the three local nodes of integration, too, viz.,
+while continuing thereafter with
 $$
-\boldsymbol{f}_{n,1} = \boldsymbol{f}_{n-1} + \frac{\mathrm{d}t}{72} \left(
-17 \boldsymbol{f}^{\prime} (t_{n,1}) -7 \boldsymbol{f}^{\prime} (t_{n,2})+ 2 \boldsymbol{f}^{\prime} (t_{n,3}) \right)
+\boldsymbol{f}_n = \tfrac{18}{11} \boldsymbol{f}_{n-1} - \tfrac{9}{11} \boldsymbol{f}_{n-2} + \tfrac{2}{11} \boldsymbol{f}_{n-3} + \tfrac{6}{11} \boldsymbol{f}^{\prime}_n \, \mathrm{d}t \quad \text{for all} \; n > 2
 $$
-$$
-\boldsymbol{f}_{n,2} = \boldsymbol{f}_{n-1} + \frac{\mathrm{d}t}{8} \left(
-3 \boldsymbol{f}^{\prime} (t_{n,1}) + \boldsymbol{f}^{\prime} (t_{n,2}) \right)
-$$
-$$
-\boldsymbol{f}_{n,3} = \boldsymbol{f}_{n-1} + \frac{5 \, \mathrm{d}t}{72} \left( 5 \boldsymbol{f}^{\prime} (t_{n,1}) + 5 \boldsymbol{f}^{\prime} (t_{n,2})+ 2 \boldsymbol{f}^{\prime} (t_{n,3}) \right)
-$$
-with like expressions establishing $\boldsymbol{g}_{n,j}$. The method of Newton-Cotes provides these formulæ, too.
+whose rates $\boldsymbol{f}^{\prime}_n$ are solutions to a Volterra integral equation of the second kind. A like strategy is used to integrate the control function $\boldsymbol{g}^{\prime}$.
 
 ## Software
 
@@ -408,32 +311,32 @@ Herein string `systemOfUnits` is (at present) either "SI" or "CGS", with `time` 
 
 The tuples that are to be supplied for the incorporated memory functions for creep listed above, i.e. the model's material constants, are:
 
-1) BOX: parameters = $(τ_1, τ_2)$
-2) CCM: parameters = $(α, τ)$
-3) FLS: parameters = $(α, τ)$
-4) KWW: parameters = $(α, τ)$
-5) MCM: parameters = $(c_1, c_2, …, c_L, τ_1, τ_2, …, τ_L)$
-6) MPL: parameters = $(α, τ)$
-7) RFS: parameters = $(α, δ, τ)$
-8) SLS: parameters = $(τ,)$
+| $K$ | parameters |
+| --- | --- |
+| BOX | $(τ_1, τ_2)$ |
+| CCM | $(α, τ)$ |
+| FLS | $(α, τ)$ |
+| KWW | $(α, τ)$ |
+| MCM | $(c_1, c_2, …, c_L, τ_1, τ_2, …, τ_L)$ |
+| MPL | $(α, τ)$ |
+| RFS | $(α, δ, τ)$ |
+| SLS | $(τ,)$ |
 
-All memory functions return a tuple. Specifically, they return tuple $(k, \tau)$ wherein $k$ is the value of $K(t)$ and $\tau$ is its rate controlling characteristic time, both of which are instances of type `PhysicalFields.PhysicalScalar.`
+All memory functions return a tuple. Specifically, they return tuple $(name, k, \tau)$ wherein $name$ is string specifying the name of the kernel, e.g. "BOX", while $k$ is the value of $K(t)$ and $\tau$ is its rate controlling characteristic time, both of which are instances of type `PhysicalFields.PhysicalScalar.`
 
 ### Constructing Weights of Quadrature for Volterra Integral Equations
 
-The weights of quadrature for this, a solver of Young's [16] method, can be created with a call to the following function
+The weights of quadrature for this, a solver for Volterra integral equationss of the second kind, can be created with a call to the following function
 ```
 function normalizedQuadratureWeights(systemOfUnits::String,
+                                     N::Integer,
                                      dTime::PhysicalScalar,
-                                     parameters::Tuple,
                                      kernel::Function,
-                                     Nₘₐₓ::Integer,
-                                     significantFigures::Integer=5)::ArrayOfPhysicalTensors
-
+                                     parameters::Tuple)::ArrayOfPhysicalScalars
 ```
-where the `kernel` is any of the eight memory functions addressed above, or one of your own design. This function is called internally, whose arguments include `systemOfUnits` and `parameters,` with its argument for `time` being an integer multiple of step size `dTime,` which is the global time-step size of the solver. The returned quadrature weights are contained within an instance of type `PhysicalFields.ArrayOfPhysicalTensors` whose length is the lesser value of `Nₘₐₓ` and that length determined from the characteristic time $\tau$ supplied by the `kernel` at the accuracy sought. This is established via argument `significantFigues,` which is bound to the integer interval [3, 9] with 5 being its default value. For example, at this default, the array of quadrature weights will have a length of $\min (N_{\text{max}}, N_t)$ where $N_t$ is that value whereat $K(N_t \, \mathrm{d}t) < 10^{-5}$.
+where the `kernel` is any of the eight memory functions addressed above, or one of your own design. The supplied `kernel` function is called internally, whose arguments include `systemOfUnits` and `parameters,` with its argument for `time` being an integer multiple of step size `dTime,` which is the time-step size used by the solver, up to a time of `N dTime,` where `N` is the number of solution steps to be taken. The returned quadrature weights are contained within an instance of type `PhysicalFields.ArrayOfPhysicalScalars` whose length is `N.`
 
-The returned quadrature weights are of type `PhysicalFields.ArrayOfPhysicalTensors,` and as such, they can be stored to a JSON file for a later retrieval. 
+The returned quadrature weights are of type `PhysicalFields.ArrayOfPhysicalScalars,` and as such, they can be stored to a JSON file for a later retrieval. In fact, a call to `normalizedQuadratureWeights` will first check to see if they exist in a file, and if so they will be read in and returned; otherwise, they are computed and written to file before this function returns them.
 
 # Solver for Volterra Integral Equations of the Second Kind
 
@@ -449,17 +352,16 @@ and they come in three flavors: for scalar equations, for vector equations, and 
 struct VolterraIntegralScalarEquation <: VolterraIntegralEquation
     # Dimensioning fields
     dt::PhysicalScalar          # distance separating global integration nodes
-    N::Integer                  # number of integration nodes in a solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    N::Int64                    # number of integration nodes in a solution path
     n::MInteger                 # current node along a solution path
-    # Arrays of length N+1 holding integrated variable rates at the global nodes
+    # Arrays of length N+1 holding control and response fields, and their rates
     f::ArrayOfPhysicalScalars   # array of integrated response function values
+    f′::ArrayOfPhysicalScalars  # array of response function rates
     g::ArrayOfPhysicalScalars   # array of integrated control function values
+    g′::ArrayOfPhysicalScalars  # array of control function rates
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervalS
-    f′::ArrayOfPhysicalScalars  # history array of response function rates
-    # Array of Nₘₐₓ normalized weights of quadrature for a product integral
-    W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
+    # Array of N normalized weights of quadrature for a product integral
+    W::ArrayOfPhysicalScalars   # array holding quadrature weights
 end
 ```
 
@@ -468,25 +370,25 @@ end
 There are two such constructors, i.e., the first constructor is
 ```
 function VolterraIntegralScalarEquation(systemOfUnits::String,
-                                        N::Integer,
+                                        N::Int64,
                                         dt::PhysicalScalar,
                                         f₀::PhysicalScalar,
                                         g₀::PhysicalScalar,
-                                        W::ArrayOfPhysicalTensors)
+                                        W::ArrayOfPhysicalScalars)
 ```
 wherein `f₀` and `g₀` are initial values for the response variable and the control variable, respectively, while the second constructor is
 ```
 function VolterraIntegralScalarEquation(dt::PhysicalScalar,
-                                        N::Integer,
-                                        Nₘₐₓ::Integer,
+                                        N::Int64,
                                         n::MInteger, 
                                         f::ArrayOfPhysicalScalars,
-                                        g::ArrayOfPhysicalScalars,
-                                        t::ArrayOfPhysicalScalars,
                                         f′::ArrayOfPhysicalScalars,
+                                        g::ArrayOfPhysicalScalars,
+                                        g′::ArrayOfPhysicalScalars,
+                                        t::ArrayOfPhysicalScalars,
                                         W::ArrayOfPhysicalTensors)
 ```
-The former is used to initially construct such a data structure, while the latter is used by `JSON3.jl` whenever a data structure of this type is to be recreated from a JSON file.
+The former is usually used by a user to construct such a data structure, while the latter is used by `JSON3.jl` whenever a data structure of this type is to be recreated from a JSON file.
 
 ### Methods
 
@@ -518,17 +420,17 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 ### Calling the solver to advance a solution.
 
-After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
+After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* with *n* advancing to *N*. This is done by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::PhysicalScalar, cₙ::PhysicalScalar)
 ```
-wherein `vie` is an instance of type `VolterraIntegralScalarEquation.` Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$, while argument `cₙ` is a scalar field.
+wherein `vie` is an instance of type `VolterraIntegralScalarEquation.` Argument `g′ₙ` is a scalar that contains the known rate for the control function at time $t_n = t_{n-1} + \mathrm{d}t$, while argument `cₙ` is a known scalar field also evaluated at time $t_n$.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralScalarEquation, g′ₙ::ArrayOfPhysicalScalars, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralScalarEquation, g′ₙ::PhysicalScalar, cₙ::PhysicalScalar)
 ```
-where array `g′ₙ` is of length 3 containing rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
+where `g′ₙ` and `cₙ` are scalar fields that contain updated estimates for the control function and coefficient, e.g., as supplied by a finite element solver. One need not call method `update!` unless either the coefficient `cₙ`  or the control rate `g′ₙ` is not known explicitly, and therefore must be obtained iteratively.
 
 ## For Vector Equations:
 
@@ -536,17 +438,16 @@ where array `g′ₙ` is of length 3 containing rates for the control function r
 struct VolterraIntegralVectorEquation <: VolterraIntegralEquation
     # Dimensioning fields
     dt::PhysicalScalar          # distance separating global integration nodes
-    N::Integer                  # number of integration nodes in a solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    N::Int64                    # number of integration nodes in a solution path
     n::MInteger                 # current node along a solution path
-    # Arrays of length N+1 holding integrated variable rates at the global nodes
+    # Arrays of length N+1 holding control and response fields, and their rates
     f::ArrayOfPhysicalVectors   # array of integrated response function values
+    f′::ArrayOfPhysicalVectors  # array of response function rates
     g::ArrayOfPhysicalVectors   # array of integrated control function values
+    g′::ArrayOfPhysicalVectors  # array of control function rates
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervalS
-    f′::ArrayOfPhysicalVectors  # history array of response function rates
-    # Array of Nₘₐₓ normalized weights of quadrature for a product integral
-    W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
+    # Array of N normalized weights of quadrature for a product integral
+    W::ArrayOfPhysicalScalars   # array holding quadrature weights
 end
 ```
 
@@ -554,24 +455,25 @@ end
 
 There are two such constructors, i.e., the first constructor is
 ```
-function VolterraIntegralVectorEquation(systemOfUnits::String,
-                                        N::Integer,
-                                        dt::PhysicalScalar,
-                                        f₀::PhysicalVector,
-                                        g₀::PhysicalVector,
-                                        W::ArrayOfPhysicalTensors)
+
+    function VolterraIntegralVectorEquation(systemOfUnits::String,
+                                            N::Int64,
+                                            dt::PhysicalScalar,
+                                            f₀::PhysicalVector,
+                                            g₀::PhysicalVector,
+                                            W::ArrayOfPhysicalScalars)
 ```
 wherein `f₀` and `g₀` are initial values for the response variable and the control variable, respectively, while the second constructor is
 ```
 function VolterraIntegralVectorEquation(dt::PhysicalScalar,
-                                        N::Integer,
-                                        Nₘₐₓ::Integer,
-                                        n::MInteger, 
+                                        N::Int64,
+                                        n::MInteger,
                                         f::ArrayOfPhysicalVectors,
-                                        g::ArrayOfPhysicalVectors,
-                                        t::ArrayOfPhysicalScalars,
                                         f′::ArrayOfPhysicalVectors,
-                                        W::ArrayOfPhysicalTensors)
+                                        g::ArrayOfPhysicalVectors,
+                                        g′::ArrayOfPhysicalVectors, 
+                                        t::ArrayOfPhysicalScalars,
+                                        W::ArrayOfPhysicalScalars)
 ```
 The former is used to initially construct such a data structure, while the latter is used by `JSON3.jl` whenever a data structure of this type is to be recreated from a JSON file.
 
@@ -607,33 +509,32 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::PhysicalVector, cₙ::PhysicalScalar)
 ```
-wherein `vie` is an instance of type `VolterraIntegralVectorEquation.` Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$, while argument `cₙ` is a scalar field.
+wherein `vie` is an instance of type `VolterraIntegralVectorEquation.` Argument `g′ₙ` is a vector that contains the known rate for the control function at time $t_n = t_{n-1} + \mathrm{d}t$, while argument `cₙ` is a known scalar field also evaluated at time $t_n$.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralVectorEquation, g′ₙ::ArrayOfPhysicalVectors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralVectorEquation, g′ₙ::PhysicalVector, cₙ::PhysicalScalar)
 ```
-where array `g′ₙ` is of length 3 containing rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
+where `g′ₙ` is a vector and `cₙ` is a scalar. These fields contain updated estimates for the control function and/or the coefficient, e.g., as supplied by a finite element solver. One need not call method `update!` unless either the coefficient `cₙ`  or the control rate `g′ₙ` is not known explicitly.
 
 ## For Tensor Equations:
 
 ```
 struct VolterraIntegralTensorEquation <: VolterraIntegralEquation
     # Dimensioning fields
-    dt::PhysicalScalar          # distance separating global integration nodes
-    N::Integer                  # number of integration nodes in a solution path
-    Nₘₐₓ::Integer               # maximum number of nodes whose history is kept
+    dt::PhysicalScalar          # distance separating neighboring solution nodes
+    N::Int64                    # number of integration nodes in a solution path
     n::MInteger                 # current node along a solution path
-    # Arrays of length N+1 holding integrated variable rates at the global nodes
+    # Arrays of length N+1 holding control and response fields, and their rates
     f::ArrayOfPhysicalTensors   # array of integrated response function values
+    f′::ArrayOfPhysicalTensors  # array of response function rates
     g::ArrayOfPhysicalTensors   # array of integrated control function values
+    g′::ArrayOfPhysicalTensors  # array of control function rates
     t::ArrayOfPhysicalScalars   # array of times, the independent variable
-    # Array of length 3N holding response function rates at over local intervalS
-    f′::ArrayOfPhysicalTensors  # history array of response function rates
-    # Array of Nₘₐₓ normalized weights of quadrature for a product integral
-    W::ArrayOfPhysicalTensors   # array of matrices holding quadrature weights
+    # Array of N normalized weights of quadrature for a product integral
+    W::ArrayOfPhysicalScalars   # array holding the quadrature weights weights
 end
 ```
 
@@ -641,24 +542,24 @@ end
 
 There are two such constructors, i.e., the first constructor is
 ```
-function VolterraIntegralTensorEquation(systemOfUnits::String,
-                                        N::Integer,
+function VolterraIntegralTensorEquation(systemOfUnits::String, 
+                                        N::Int64,
                                         dt::PhysicalScalar,
                                         f₀::PhysicalTensor,
                                         g₀::PhysicalTensor,
-                                        W::ArrayOfPhysicalTensors)
+                                        W::ArrayOfPhysicalScalars)
 ```
 wherein `f₀` and `g₀` are initial values for the response variable and the control variable, respectively, while the second constructor is
 ```
 function VolterraIntegralTensorEquation(dt::PhysicalScalar,
-                                        N::Integer,
-                                        Nₘₐₓ::Integer,
-                                        n::MInteger, 
+                                        N::Int64,
+                                        n::MInteger,
                                         f::ArrayOfPhysicalTensors,
-                                        g::ArrayOfPhysicalTensors,
-                                        t::ArrayOfPhysicalScalars,
                                         f′::ArrayOfPhysicalTensors,
-                                        W::ArrayOfPhysicalTensors)
+                                        g::ArrayOfPhysicalTensors,
+                                        g′::ArrayOfPhysicalTensors,
+                                        t::ArrayOfPhysicalScalars,
+                                        W::ArrayOfPhysicalScalars)
 ```
 The former is used to initially construct such a data structure, while the latter is used by `JSON3.jl` whenever a data structure of this type is to be recreated from a JSON file.
 
@@ -694,16 +595,15 @@ function PhysicalFields.closeJSONStream(json_stream::IOStream)
 
 After a Volterra integral's data structure has been created, thereby initializing a problem, one can advance a solution along its path from node *n-1* to node *n* by sequentially calling the following function:
 ```
-function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::PhysicalTensor, cₙ::PhysicalScalar)
 ```
-wherein `vie` is an instance of type `VolterraIntegralTensorEquation.`  Argument `g′ₙ` is an array of length 3 that contains rates for the control function at times $t_{n,1} = t_{n-1} + \mathrm{d}t/6$, $t_{n,2} = t_{n-1} + \mathrm{d}t/2$ and $t_{n,3} = t_{n-1} + 5\mathrm{d}t/6$, while argument `cₙ` is a scalar field.
+wherein `vie` is an instance of type `VolterraIntegralTensorEquation.` Argument `g′ₙ` is a tensor that contains the known rate for the control function at time $t_n = t_{n-1} + \mathrm{d}t$, while argument `cₙ` is a known scalar field also evaluated at time $t_n$.
 
 There are applications where a solution is to be secured iteratively, e.g., during an optimization problem. In such cases one can call the following method as many times as needed before advancing a solution to its next node along its path via a call to `advance!.` Such iterative refinements result from a call to
 ```
-function update!(vie::VolterraIntegralTensorEquation, g′ₙ::ArrayOfPhysicalTensors, cₙ::PhysicalScalar)
+function update!(vie::VolterraIntegralTensorEquation, g′ₙ::PhysicalTensor, cₙ::PhysicalScalar)
 ```
-where array `g′ₙ` is of length 3 containing rates for the control function refined via an iterative step in some external global solver, e.g., a finite element solver. One need not call method `update!` whenever the coefficient `cₙ`  and control rate `g′ₙ` are known explicitly.
-
+where `g′ₙ` is a tensor field and `cₙ` is a scalar field that contain updated estimates for the control function and a coefficient, e.g., as supplied by a finite element solver. One need not call method `update!` unless either the coefficient `cₙ`  or the control rate `g′ₙ` is not known explicitly.
 
 ## References
 
@@ -742,6 +642,10 @@ where array `g′ₙ` is of length 3 containing rates for the control function r
 17) Zener, C., *Elasticity and Anelasticity of Metals*. Chicago: University of Chicago Press, 1948.
 
 ## Version History
+
+### Version 0.2.0
+
+A different and simpler solver is employed here. The previous algorithm expanded the kernel in a Taylor expansion to construct moments that were used as quadrature weights [16]. This resulted in an artifact--a numerical ringing--that would occur at the beginning of some solutions. The new solver does not include such a sophistication, and seems to be better behaved for it.
 
 ### Version 0.1.3
 

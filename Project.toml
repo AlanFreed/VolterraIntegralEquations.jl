@@ -1,10 +1,9 @@
 name = "VolterraIntegralEquations"
 uuid = "3c7aa951-ea7c-4693-9960-9a56b602040e"
 authors = ["Alan Freed <alan.d.freed@proton.me>"]
-version = "0.2.0"
+version = "0.2.0-1"
 
 [deps]
-CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
 MittagLeffler = "9c257583-4f8f-53fd-abd9-c69d5080dd54"
 PhysicalFields = "ecb0663d-aa47-424e-b5ff-03a0dca9671a"

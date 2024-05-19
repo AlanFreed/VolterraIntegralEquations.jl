@@ -60,33 +60,33 @@ function memoryFns(myDirPath::String)
     # Populate the memory function arrays
     time  = PhysicalScalar(CGS_SECOND)
     dTime = 3 * τ_ϵ / N
-    (k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
+    (name, k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
     arrayBOX[1] = k
-    (k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
+    (name, k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
     arrayMPL[1] = k
-    (k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
+    (name, k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
     arrayRFS[1] = k
-    (k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
+    (name, k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
     arraySLS[1] = k
     for n in 1:N
         time = time + dTime
         # weakly singular kernels
-        (k, tau) = VolterraIntegralEquations.CCM("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VolterraIntegralEquations.CCM("CGS", time, (α, τ_ϵ))
         arrayCCM[n] = k
-        (k, tau) = VolterraIntegralEquations.FLS("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VolterraIntegralEquations.FLS("CGS", time, (α, τ_ϵ))
         arrayFLS[n] = k
-        (k, tau) = VolterraIntegralEquations.KWW("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VolterraIntegralEquations.KWW("CGS", time, (α, τ_ϵ))
         arrayKWW[n] = k
         # non-singular kernels
-        (k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
+        (name, k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
         arrayBOX[n] = k
-        (k, tau) = VolterraIntegralEquations.MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
+        (name, k, tau) = VolterraIntegralEquations.MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
         arrayMCM[n] = k
-        (k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
         arrayMPL[n+1] = k
-        (k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
+        (name, k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
         arrayRFS[n+1] = k
-        (k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
+        (name, k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
         arraySLS[n+1] = k
     end
 

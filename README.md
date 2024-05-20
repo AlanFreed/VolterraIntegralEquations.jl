@@ -645,6 +645,10 @@ where `g′ₙ` is a tensor field and `cₙ` is a scalar field that contain upda
 
 ## Version History
 
+### Version 0.2.1
+
+Bug fixes in the BDF solver.
+
 ### Version 0.2.0
 
 A different and simpler solver is employed here. The previous algorithm expanded the kernel in a Taylor expansion to construct moments that were used as quadrature weights [16]. This resulted in an artifact--a numerical ringing--that would occur at the beginning of some solutions. The new solver does not include such a sophistication, and seems to be better behaved for it.

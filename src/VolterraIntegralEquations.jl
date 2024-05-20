@@ -1,6 +1,6 @@
 #=
 Created on Tue 27 Jun 2023
-Updated on Mon 13 May 2024
+Updated on Mon 20 May 2024
 =#
 
 #=
@@ -848,13 +848,13 @@ function advance!(vie::VolterraIntegralScalarEquation, g′ₙ::PhysicalScalar, 
         vie.f[2] = vie.f[1] + 0.5vie.f′[2]*vie.dt
         vie.g[2] = vie.g[1] + 0.5vie.g′[2]*vie.dt
     elseif vie.n == 3
-        vie.f[3] = (4/3)*vie.f[2] - (1/3)*vie.f[1] + (2/3)*vie.f′[2]*vie.dt
-        vie.g[3] = (4/3)*vie.g[2] - (1/3)*vie.g[1] + (2/3)*vie.g′[2]*vie.dt
+        vie.f[3] = (4vie.f[2] - vie.f[1] + 2vie.f′[3]*vie.dt) / 3
+        vie.g[3] = (4vie.g[2] - vie.g[1] + 2vie.g′[3]*vie.dt) / 3
     else
-        vie.f[n] = ((18/11)*vie.f[n-1] - (9/11)*vie.f[n-2] + (2/11)*vie.f[n-3]
-            + (6/11)*vie.f′[n]*vie.dt)
-        vie.g[n] = ((18/11)*vie.g[n-1] - (9/11)*vie.g[n-2] + (2/11)*vie.g[n-3]
-            + (6/11)*vie.g′[n]*vie.dt)
+        vie.f[n] = ((18vie.f[n-1] - 9vie.f[n-2] + 2vie.f[n-3]
+            + 6vie.f′[n]*vie.dt) / 11)
+        vie.g[n] = ((18vie.g[n-1] - 9vie.g[n-2] + 2vie.g[n-3]
+            + 6vie.g′[n]*vie.dt) / 11)
     end
 
     return nothing
@@ -1053,15 +1053,15 @@ function advance!(vie::VolterraIntegralVectorEquation, g′ₙ::PhysicalVector, 
             vie.f[2,j] = vie.f[1,j] + 0.5vie.f′[2,j]*vie.dt
             vie.g[2,j] = vie.g[1,j] + 0.5vie.g′[2,j]*vie.dt
         elseif vie.n == 3
-            vie.f[3,j] = ((4/3)*vie.f[2,j] - (1/3)*vie.f[1,j]
-                + (2/3)*vie.f′[2,j]*vie.dt)
-            vie.g[3,j] = ((4/3)*vie.g[2,j] - (1/3)*vie.g[1,j]
-                + (2/3)*vie.g′[2,j]*vie.dt)
+            vie.f[3,j] = ((4vie.f[2,j] - vie.f[1,j]
+                + 2vie.f′[3,j]*vie.dt) / 3)
+            vie.g[3,j] = ((4vie.g[2,j] - vie.g[1,j]
+                + 2vie.g′[3,j]*vie.dt) / 3)
         else
-            vie.f[n,j] = ((18/11)*vie.f[n-1,j] - (9/11)*vie.f[n-2,j]
-                + (2/11)*vie.f[n-3,j] + (6/11)*vie.f′[n,j]*vie.dt)
-            vie.g[n,j] = ((18/11)*vie.g[n-1,j] - (9/11)*vie.g[n-2,j]
-                + (2/11)*vie.g[n-3,j] + (6/11)*vie.g′[n,j]*vie.dt)
+            vie.f[n,j] = ((18vie.f[n-1,j] - 9vie.f[n-2,j]
+                + 2vie.f[n-3,j] + 6vie.f′[n,j]*vie.dt) / 11)
+            vie.g[n,j] = ((18vie.g[n-1,j] - 9vie.g[n-2,j]
+                + 2vie.g[n-3,j] + 6vie.g′[n,j]*vie.dt) / 11)
         end
     end
 
@@ -1269,15 +1269,15 @@ function advance!(vie::VolterraIntegralTensorEquation, g′ₙ::PhysicalTensor, 
                 vie.f[2,j,k] = vie.f[1,j,k] + 0.5vie.f′[2,j,k]*vie.dt
                 vie.g[2,j,k] = vie.g[1,j,k] + 0.5vie.g′[2,j,k]*vie.dt
             elseif vie.n == 3
-                vie.f[3,j,k] = ((4/3)*vie.f[2,j,k] - (1/3)*vie.f[1,j,k]
-                    + (2/3)*vie.f′[2,j,k]*vie.dt)
-                vie.g[3,j,k] = ((4/3)*vie.g[2,j,k] - (1/3)*vie.g[1,j,k]
-                    + (2/3)*vie.g′[2,j,k]*vie.dt)
+                vie.f[3,j,k] = ((4vie.f[2,j,k] - vie.f[1,j,k]
+                    + 2vie.f′[3,j,k]*vie.dt) / 3)
+                vie.g[3,j,k] = ((4vie.g[2,j,k] - vie.g[1,j,k]
+                    + 2vie.g′[3,j,k]*vie.dt) / 3)
             else
-                vie.f[n,j,k] = ((18/11)*vie.f[n-1,j,k] - (9/11)*vie.f[n-2,j,k]
-                    + (2/11)*vie.f[n-3,j,k] + (6/11)*vie.f′[n,j,k]*vie.dt)
-                vie.g[n,j,k] = ((18/11)*vie.g[n-1,j,k] - (9/11)*vie.g[n-2,j,k]
-                    + (2/11)*vie.g[n-3,j,k] + (6/11)*vie.g′[n,j,k]*vie.dt)
+                vie.f[n,j,k] = ((18vie.f[n-1,j,k] - 9vie.f[n-2,j,k]
+                    + 2vie.f[n-3,j,k] + 6vie.f′[n,j,k]*vie.dt) / 11)
+                vie.g[n,j,k] = ((18vie.g[n-1,j,k] - 9vie.g[n-2,j,k]
+                    + 2vie.g[n-3,j,k] + 6vie.g′[n,j,k]*vie.dt) / 11)
             end
         end
     end

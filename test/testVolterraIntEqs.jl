@@ -1,92 +1,105 @@
 module testVolterraIntEqs
 
 using
-    CairoMakie,       # Pixel based figure construction.
+    CairoMakie,
     PhysicalFields,
     VolterraIntegralEquations
+ 
+import
+    CairoMakie as CM,
+    PhysicalFields as PF,
+    VolterraIntegralEquations as VIE
 
 export
     Abel,
     memoryFns
 
-function memoryFns(myDirPath::String)
+function memoryFns(my_dir_path::String)
     N = 150
 
     # viscoelastic material constants for elastin
-    ν   = PhysicalScalar(0.59, CGS_DIMENSIONLESS)
-    τ_ϵ = PhysicalScalar(9.0E-4, CGS_SECOND)
-    τ_σ = PhysicalScalar(7.0E-8, CGS_SECOND)
-    δ   = 0.1219 * τ_ϵ
-    E_∞ = PhysicalScalar(2.3E6, BARYE)
-    E_0 = (τ_ϵ/τ_σ)^get(ν) * E_∞
+    ν   = PF.PhysicalScalar(0.59, PF.CGS_DIMENSIONLESS)
+    τ_ε = PF.PhysicalScalar(9.0E-4, PF.CGS_SECOND)
+    τ_σ = PF.PhysicalScalar(7.0E-8, PF.CGS_SECOND)
+    δ   = 0.1219 * τ_ε
+    E_∞ = PF.PhysicalScalar(2.3E6, PF.BARYE)
+    E_0 = (τ_ε/τ_σ)^get(ν) * E_∞
 
     # material constants for our model
     α = ν
-    τ = τ_ϵ
+    τ = τ_ε
     E = E_0
     c = (E_0 - E_∞) / E_∞
+    println("The following viscoelastic model parameters are considered,")
+    println("which are those of elastin fit to the FLS memory function.")
+    println("  α  = ", PF.toString(α))
+    println("  τ  = ", PF.toString(τ))
+    println("  δ  = ", PF.toString(δ))
+    println("  E₀ = ", PF.toString(E_0))
+    println("  E∞ = ", PF.toString(E_∞))
+    println("  c  = ", PF.toString(c), " = (E₀-E∞)/E∞\n")
 
     # assumed material constants for the Maxwell Chain Model.
-    c₁ = PhysicalScalar(0.25, CGS_DIMENSIONLESS)
-    c₂ = PhysicalScalar(0.25, CGS_DIMENSIONLESS)
-    c₃ = PhysicalScalar(0.25, CGS_DIMENSIONLESS)
-    c₄ = PhysicalScalar(0.25, CGS_DIMENSIONLESS)
+    c₁ = PF.PhysicalScalar(0.25, PF.CGS_DIMENSIONLESS)
+    c₂ = PF.PhysicalScalar(0.25, PF.CGS_DIMENSIONLESS)
+    c₃ = PF.PhysicalScalar(0.25, PF.CGS_DIMENSIONLESS)
+    c₄ = PF.PhysicalScalar(0.25, PF.CGS_DIMENSIONLESS)
     τ₁ = τ_σ
-    τ  = exp10(log10(get(τ_σ)) + (log10(get(τ_ϵ)) - log10(get(τ_σ)))/3)
-    τ₂ = PhysicalScalar(τ, CGS_SECOND)
-    τ  = exp10(log10(get(τ_σ)) + 2(log10(get(τ_ϵ)) - log10(get(τ_σ)))/3)
-    τ₃ = PhysicalScalar(τ, CGS_SECOND)
-    τ₄ = τ_ϵ
+    τ  = exp10(log10(get(τ_σ)) + (log10(get(τ_ε)) - log10(get(τ_σ)))/3)
+    τ₂ = PF.PhysicalScalar(τ, PF.CGS_SECOND)
+    τ  = exp10(log10(get(τ_σ)) + 2(log10(get(τ_ε)) - log10(get(τ_σ)))/3)
+    τ₃ = PF.PhysicalScalar(τ, PF.CGS_SECOND)
+    τ₄ = τ_ε
     println("For the Prony series, let c_i = 0.25, i = 1,...,4, and")
-    println("   τ₁ = ", toString(τ₁))
-    println("   τ₂ = ", toString(τ₂))
-    println("   τ₃ = ", toString(τ₃))
-    println("   τ₄ = ", toString(τ₄))
+    println("   τ₁ = ", PF.toString(τ₁))
+    println("   τ₂ = ", PF.toString(τ₂))
+    println("   τ₃ = ", PF.toString(τ₃))
+    println("   τ₄ = ", PF.toString(τ₄))
     println()
 
     # Create the arrays to hold values for the memory function.
-    reciprocalTime = PhysicalUnits("CGS", 0, 0, 0, -1, 0, 0, 0)
+    reciprocalTime = PF.PhysicalUnits("CGS", 0, 0, 0, -1, 0, 0, 0)
     # weakly singular kernels
-    arrayCCM = ArrayOfPhysicalScalars(N, reciprocalTime)
-    arrayFLS = ArrayOfPhysicalScalars(N, reciprocalTime)
-    arrayKWW = ArrayOfPhysicalScalars(N, reciprocalTime)
+    arrayCCM = PF.ArrayOfPhysicalScalars(N, reciprocalTime)
+    arrayFLS = PF.ArrayOfPhysicalScalars(N, reciprocalTime)
+    arrayKWW = PF.ArrayOfPhysicalScalars(N, reciprocalTime)
     # non-singular kernels
-    arrayBOX = ArrayOfPhysicalScalars(N+1, reciprocalTime)
-    arrayMCM = ArrayOfPhysicalScalars(N, reciprocalTime)
-    arrayMPL = ArrayOfPhysicalScalars(N+1, reciprocalTime)
-    arrayRFS = ArrayOfPhysicalScalars(N+1, reciprocalTime)
-    arraySLS = ArrayOfPhysicalScalars(N+1, reciprocalTime)
+    arrayBOX = PF.ArrayOfPhysicalScalars(N+1, reciprocalTime)
+    arrayMCM = PF.ArrayOfPhysicalScalars(N, reciprocalTime)
+    arrayMPL = PF.ArrayOfPhysicalScalars(N+1, reciprocalTime)
+    arrayRFS = PF.ArrayOfPhysicalScalars(N+1, reciprocalTime)
+    arraySLS = PF.ArrayOfPhysicalScalars(N+1, reciprocalTime)
 
     # Populate the memory function arrays
-    time  = PhysicalScalar(CGS_SECOND)
-    dTime = 3 * τ_ϵ / N
-    (name, k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
+    time  = PF.PhysicalScalar(PF.CGS_SECOND)
+    dtime = 3 * τ_ε / N
+    (name, k, tau) = VIE.BOX("CGS", time, (τ_σ, τ_ε))
     arrayBOX[1] = k
-    (name, k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
+    (name, k, tau) = VIE.MPL("CGS", time, (α, τ_ε))
     arrayMPL[1] = k
-    (name, k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
+    (name, k, tau) = VIE.RFS("CGS", time, (α, δ, τ_ε))
     arrayRFS[1] = k
-    (name, k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
+    (name, k, tau) = VIE.SLS("CGS", time, (τ_ε,))
     arraySLS[1] = k
     for n in 1:N
-        time = time + dTime
+        time = time + dtime
         # weakly singular kernels
-        (name, k, tau) = VolterraIntegralEquations.CCM("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VIE.CCM("CGS", time, (α, τ_ε))
         arrayCCM[n] = k
-        (name, k, tau) = VolterraIntegralEquations.FLS("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VIE.FLS("CGS", time, (α, τ_ε))
         arrayFLS[n] = k
-        (name, k, tau) = VolterraIntegralEquations.KWW("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VIE.KWW("CGS", time, (α, τ_ε))
         arrayKWW[n] = k
         # non-singular kernels
-        (name, k, tau) = VolterraIntegralEquations.BOX("CGS", time, (τ_σ, τ_ϵ))
+        (name, k, tau) = VIE.BOX("CGS", time, (τ_σ, τ_ε))
         arrayBOX[n] = k
-        (name, k, tau) = VolterraIntegralEquations.MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
+        (name, k, tau) = VIE.MCM("CGS", time, (c₁, c₂, c₃, c₄, τ₁, τ₂, τ₃, τ₄))
         arrayMCM[n] = k
-        (name, k, tau) = VolterraIntegralEquations.MPL("CGS", time, (α, τ_ϵ))
+        (name, k, tau) = VIE.MPL("CGS", time, (α, τ_ε))
         arrayMPL[n+1] = k
-        (name, k, tau) = VolterraIntegralEquations.RFS("CGS", time, (α, δ, τ_ϵ))
+        (name, k, tau) = VIE.RFS("CGS", time, (α, δ, τ_ε))
         arrayRFS[n+1] = k
-        (name, k, tau) = VolterraIntegralEquations.SLS("CGS", time, (τ_ϵ,))
+        (name, k, tau) = VIE.SLS("CGS", time, (τ_ε,))
         arraySLS[n+1] = k
     end
 
@@ -101,35 +114,35 @@ function memoryFns(myDirPath::String)
     mpl = zeros(Float64, N+1)
     rfs = zeros(Float64, N+1)
     sls = zeros(Float64, N+1)
-    set!(time, 0.0)
-    t₂[1]  = get(time) / get(τ_ϵ)
-    box[1] = get(τ_ϵ) * get(arrayBOX[1])
-    mcm[1] = get(τ_ϵ) * get(arrayMCM[1])
-    mpl[1] = get(τ_ϵ) * get(arrayMPL[1])
-    rfs[1] = get(τ_ϵ) * get(arrayRFS[1])
-    sls[1] = get(τ_ϵ) * get(arraySLS[1])
+    PF.set!(time, 0.0)
+    t₂[1]  = get(time) / get(τ_ε)
+    box[1] = get(τ_ε) * get(arrayBOX[1])
+    mcm[1] = get(τ_ε) * get(arrayMCM[1])
+    mpl[1] = get(τ_ε) * get(arrayMPL[1])
+    rfs[1] = get(τ_ε) * get(arrayRFS[1])
+    sls[1] = get(τ_ε) * get(arraySLS[1])
     for n in 1:N
         # weakly singular kernels
-        time   = time + dTime
-        t₁[n]  = get(time) / get(τ_ϵ)
-        ccm[n] = get(τ_ϵ) * get(arrayCCM[n])
-        fls[n] = get(τ_ϵ) * get(arrayFLS[n])
-        kww[n] = get(τ_ϵ) * get(arrayKWW[n])
+        time   = time + dtime
+        t₁[n]  = get(time) / get(τ_ε)
+        ccm[n] = get(τ_ε) * get(arrayCCM[n])
+        fls[n] = get(τ_ε) * get(arrayFLS[n])
+        kww[n] = get(τ_ε) * get(arrayKWW[n])
         # non-singular kernels
         t₂[n+1]  = t₁[n]
-        box[n]   = get(τ_ϵ) * get(arrayBOX[n+1])
-        mcm[n]   = get(τ_ϵ) * get(arrayMCM[n])
-        mpl[n+1] = get(τ_ϵ) * get(arrayMPL[n+1])
-        rfs[n+1] = get(τ_ϵ) * get(arrayRFS[n+1])
-        sls[n+1] = get(τ_ϵ) * get(arraySLS[n+1])
+        box[n]   = get(τ_ε) * get(arrayBOX[n+1])
+        mcm[n]   = get(τ_ε) * get(arrayMCM[n])
+        mpl[n+1] = get(τ_ε) * get(arrayMPL[n+1])
+        rfs[n+1] = get(τ_ε) * get(arrayRFS[n+1])
+        sls[n+1] = get(τ_ε) * get(arraySLS[n+1])
     end
 
     # Plot the non-singular kernels.
 
-    fig1 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax1 = Axis(fig1[1, 1];
-        xlabel = "time ÷ characteristic time  (t / τ_ϵ)",
-        ylabel = "characteristic time × memory function  (τ_ϵ × k)",
+    fig1 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax1 = CM.Axis(fig1[1, 1];
+        xlabel = "time ÷ characteristic time  (t / τ_ε)",
+        ylabel = "characteristic time × memory function  (τ_ε × k)",
         title = "Non-singular Memory Functions for Elastin",
         titlesize = 24,
         xlabelsize = 20,
@@ -161,14 +174,14 @@ function memoryFns(myDirPath::String)
         label = "SLS")
     axislegend("Function",
         position = :rt)
-    save(string(myDirPath, "memoryFnNonSingular.png"), fig1)
+    save(string(my_dir_path, "files/memoryFnNonSingular.png"), fig1)
 
     # Plot the weakly singular kernels.
 
-    fig2 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax2 = Axis(fig2[1, 1];
-        xlabel = "time ÷ characteristic time  (t / τ_ϵ)",
-        ylabel = "characteristic time × memory function  (τ_ϵ × k)",
+    fig2 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax2 = CM.Axis(fig2[1, 1];
+        xlabel = "time ÷ characteristic time  (t / τ_ε)",
+        ylabel = "characteristic time × memory function  (τ_ε × k)",
         title = "Weakly-singular Memory Functions for Elastin",
         titlesize = 24,
         xlabelsize = 20,
@@ -190,36 +203,74 @@ function memoryFns(myDirPath::String)
         label = "KWW")
     axislegend("Function",
         position = :rt)
-    save(string(myDirPath, "memoryFnWeaklySingular.png"), fig2)
+    save(string(my_dir_path, "files/memoryFnWeaklySingular.png"), fig2)
 end # memoryFns
 
-function AbelKernel(systemOfUnits::String, time::PhysicalScalar, parameters::Tuple)::Tuple
+function AbelKernel(system_of_units::String, time::PF.PhysicalScalar, parameters::Tuple)::Tuple
     kernel = 1 / sqrt(time)
-    tau = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
+    tau = PF.PhysicalScalar(1.0, PF.CGS_DIMENSIONLESS)
     return ("Abel", kernel, tau)
 end # AbelKernel
 
-function Abel(myDirPath::String)
+function Abel(my_dir_path::String)
     CairoMakie.activate!(type = "png")
 
     # Solve an Abel integral equation: solution parameters.
-    t = PhysicalScalar(10.0, CGS_DIMENSIONLESS) # upper limit of integration
+    t = PF.PhysicalScalar(10.0, PF.CGS_DIMENSIONLESS) # upper limit of integration
     p = ()
-    c = PhysicalScalar(1.0, CGS_DIMENSIONLESS)
-    f₀ = PhysicalScalar(CGS_DIMENSIONLESS)
-    g₀ = PhysicalScalar(CGS_DIMENSIONLESS)
+    c = PF.PhysicalScalar(1.0, PF.CGS_DIMENSIONLESS)
+    f₀ = PF.PhysicalScalar(PF.CGS_DIMENSIONLESS)
+    g₀ = PF.PhysicalScalar(PF.CGS_DIMENSIONLESS)
+
+    # Solve an Abel integral equation: 10 steps.
+    println("Solving the Abel integral in 10 steps.")
+    N₀ = 10
+    dt₀ = t / N₀
+    W₀ = VIE.normalizedQuadratureWeights("CGS", N₀, dt₀, AbelKernel, p)
+    g′ₙ = PF.PhysicalScalar(PF.CGS_DIMENSIONLESS)
+    VIE₀ = VIE.VolterraIntegralScalarEquation("CGS", N₀, dt₀, f₀, g₀, W₀)
+    for n in 1:N₀
+        tₙ = n * get(dt₀)
+        PF.set!(g′ₙ, π*tₙ/2 + sqrt(tₙ))
+        VIE.advance!(VIE₀, g′ₙ, c)
+    end
+
+    # Create the arrays for plotting: 10 steps.
+    x₀ = zeros(Float64, N₀+1)
+    for n in 1:N₀+1
+        x₀[n] = (n - 1) * get(dt₀)
+    end
+    y₀ = zeros(Float64, N₀+1)
+    for n in 1:N₀+1
+        soln = VIE₀.f[n]
+        y₀[n] = get(soln)
+    end
+    z₀ = zeros(Float64, N₀+1)
+    for n in 1:N₀+1
+        z₀[n] = (2/3)*x₀[n]^(3/2)
+    end
+    e₀ = zeros(Float64, N₀)
+    ε₀ = zeros(Float64, N₀)
+    for n in 1:N₀
+        e₀[n] = x₀[n+1]
+        if abs(z₀[n+1]) < 1.0
+            ε₀[n] = abs(z₀[n+1] - y₀[n+1])
+        else
+            ε₀[n] = abs(z₀[n+1] - y₀[n+1]) / abs(z₀[n+1])
+        end
+    end
 
     # Solve an Abel integral equation: 30 steps.
     println("Solving the Abel integral in 30 steps.")
     N₁ = 30
     dt₁ = t / N₁
-    W₁ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₁, dt₁, AbelKernel, p)
-    g′ₙ = PhysicalScalar(CGS_DIMENSIONLESS)
-    VIE₁ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₁, dt₁, f₀, g₀, W₁)
+    W₁ = VIE.normalizedQuadratureWeights("CGS", N₁, dt₁, AbelKernel, p)
+    g′ₙ = PF.PhysicalScalar(PF.CGS_DIMENSIONLESS)
+    VIE₁ = VIE.VolterraIntegralScalarEquation("CGS", N₁, dt₁, f₀, g₀, W₁)
     for n in 1:N₁
         tₙ = n * get(dt₁)
-        set!(g′ₙ, π*tₙ/2 + sqrt(tₙ))
-        VolterraIntegralEquations.advance!(VIE₁, g′ₙ, c)
+        PF.set!(g′ₙ, π*tₙ/2 + sqrt(tₙ))
+        VIE.advance!(VIE₁, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 30 steps.
@@ -237,13 +288,13 @@ function Abel(myDirPath::String)
         z₁[n] = (2/3)*x₁[n]^(3/2)
     end
     e₁ = zeros(Float64, N₁)
-    ϵ₁ = zeros(Float64, N₁)
+    ε₁ = zeros(Float64, N₁)
     for n in 1:N₁
         e₁[n] = x₁[n+1]
         if abs(z₁[n+1]) < 1.0
-            ϵ₁[n] = abs(z₁[n+1] - y₁[n+1])
+            ε₁[n] = abs(z₁[n+1] - y₁[n+1])
         else
-            ϵ₁[n] = abs(z₁[n+1] - y₁[n+1]) / abs(z₁[n+1])
+            ε₁[n] = abs(z₁[n+1] - y₁[n+1]) / abs(z₁[n+1])
         end
     end
 
@@ -251,12 +302,12 @@ function Abel(myDirPath::String)
     println("Solving the Abel integral in 100 steps.")
     N₂ = 100
     dt₂ = t / N₂
-    W₂ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₂, dt₂, AbelKernel, p)
-    VIE₂ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₂, dt₂, f₀, g₀, W₂)
+    W₂ = VIE.normalizedQuadratureWeights("CGS", N₂, dt₂, AbelKernel, p)
+    VIE₂ = VIE.VolterraIntegralScalarEquation("CGS", N₂, dt₂, f₀, g₀, W₂)
     for n in 1:N₂
         t₂ = n * get(dt₂)
-        set!(g′ₙ, π*t₂/2 + sqrt(t₂))
-        VolterraIntegralEquations.advance!(VIE₂, g′ₙ, c)
+        PF.set!(g′ₙ, π*t₂/2 + sqrt(t₂))
+        VIE.advance!(VIE₂, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 100 steps.
@@ -274,13 +325,13 @@ function Abel(myDirPath::String)
         z₂[n] = (2/3)*x₂[n]^(3/2)
     end
     e₂ = zeros(Float64, N₂)
-    ϵ₂ = zeros(Float64, N₂)
+    ε₂ = zeros(Float64, N₂)
     for n in 1:N₂
         e₂[n] = x₂[n+1]
         if abs(z₂[n+1]) < 1.0
-            ϵ₂[n] = abs(z₂[n+1] - y₂[n+1])
+            ε₂[n] = abs(z₂[n+1] - y₂[n+1])
         else
-            ϵ₂[n] = abs(z₂[n+1] - y₂[n+1]) / abs(z₂[n+1])
+            ε₂[n] = abs(z₂[n+1] - y₂[n+1]) / abs(z₂[n+1])
         end
     end
 
@@ -288,12 +339,12 @@ function Abel(myDirPath::String)
     println("Solving the Abel integral in 300 steps.")
     N₃ = 300
     dt₃ = t / N₃
-    W₃ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₃, dt₃, AbelKernel, p)
-    VIE₃ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₃, dt₃, f₀, g₀, W₃)
+    W₃ = VIE.normalizedQuadratureWeights("CGS", N₃, dt₃, AbelKernel, p)
+    VIE₃ = VIE.VolterraIntegralScalarEquation("CGS", N₃, dt₃, f₀, g₀, W₃)
     for n in 1:N₃
         t₃ = n * get(dt₃)
-        set!(g′ₙ, π*t₃/2 + sqrt(t₃))
-        VolterraIntegralEquations.advance!(VIE₃, g′ₙ, c)
+        PF.set!(g′ₙ, π*t₃/2 + sqrt(t₃))
+        VIE.advance!(VIE₃, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 300 steps.
@@ -311,13 +362,13 @@ function Abel(myDirPath::String)
         z₃[n] = (2/3)*x₃[n]^(3/2)
     end
     e₃ = zeros(Float64, N₃)
-    ϵ₃ = zeros(Float64, N₃)
+    ε₃ = zeros(Float64, N₃)
     for n in 1:N₃
         e₃[n] = x₃[n+1]
         if abs(z₃[n+1]) < 1.0
-            ϵ₃[n] = abs(z₃[n+1] - y₃[n+1])
+            ε₃[n] = abs(z₃[n+1] - y₃[n+1])
         else
-            ϵ₃[n] = abs(z₃[n+1] - y₃[n+1]) / abs(z₃[n+1])
+            ε₃[n] = abs(z₃[n+1] - y₃[n+1]) / abs(z₃[n+1])
         end
     end
 
@@ -325,12 +376,12 @@ function Abel(myDirPath::String)
     println("Solving the Abel integral in 1000 steps.")
     N₄ = 1000
     dt₄ = t / N₄
-    W₄ = VolterraIntegralEquations.normalizedQuadratureWeights("CGS", N₄, dt₄, AbelKernel, p)
-    VIE₄ = VolterraIntegralEquations.VolterraIntegralScalarEquation("CGS", N₄, dt₄, f₀, g₀, W₄)
+    W₄ = VIE.normalizedQuadratureWeights("CGS", N₄, dt₄, AbelKernel, p)
+    VIE₄ = VIE.VolterraIntegralScalarEquation("CGS", N₄, dt₄, f₀, g₀, W₄)
     for n in 1:N₄
         t₄ = n * get(dt₄)
-        set!(g′ₙ, π*t₄/2 + sqrt(t₄))
-        VolterraIntegralEquations.advance!(VIE₄, g′ₙ, c)
+        PF.set!(g′ₙ, π*t₄/2 + sqrt(t₄))
+        VIE.advance!(VIE₄, g′ₙ, c)
     end
 
     # Create the arrays for plotting: 1000 steps.
@@ -348,86 +399,96 @@ function Abel(myDirPath::String)
         z₄[n] = (2/3)*x₄[n]^(3/2)
     end
     e₄ = zeros(Float64, N₄)
-    ϵ₄ = zeros(Float64, N₄)
+    ε₄ = zeros(Float64, N₄)
     for n in 1:N₄
         e₄[n] = x₄[n+1]
         if abs(z₄[n+1]) < 1.0
-            ϵ₄[n] = abs(z₄[n+1] - y₄[n+1])
+            ε₄[n] = abs(z₄[n+1] - y₄[n+1])
         else
-            ϵ₄[n] = abs(z₄[n+1] - y₄[n+1]) / abs(z₄[n+1])
+            ε₄[n] = abs(z₄[n+1] - y₄[n+1]) / abs(z₄[n+1])
         end
     end
 
     println("Constructing the figures.")
-    fig1 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax1 = Axis(fig1[1, 1];
+    fig1 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax1 = CM.Axis(fig1[1, 1];
         xlabel = "Upper Limit of Integration, x",
-        ylabel = "Logarithm of Solution Error, log(ϵ)",
+        ylabel = "Logarithm of Solution Error, log(ε)",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20,
         yscale = log10)
-    lines!(ax1, e₁, ϵ₁;
+    lines!(ax1, e₀, ε₀;
         linewidth = 3,
         linestyle = :solid,
         color = :red,
-        label = "30")
-    lines!(ax1, e₂, ϵ₂;
+        label = "10")
+    lines!(ax1, e₁, ε₁;
         linewidth = 3,
         linestyle = :solid,
-        color = :blue,
-        label = "100")
-    lines!(ax1, e₃, ϵ₃;
+        color = :magenta,
+        label = "30")
+    lines!(ax1, e₂, ε₂;
         linewidth = 3,
         linestyle = :solid,
         color = :orange,
-        label = "300")
-    lines!(ax1, e₄, ϵ₄;
+        label = "100")
+    lines!(ax1, e₃, ε₃;
         linewidth = 3,
         linestyle = :solid,
         color = :cyan,
+        label = "300")
+    lines!(ax1, e₄, ε₄;
+        linewidth = 3,
+        linestyle = :solid,
+        color = :blue,
         label = "1000")
     axislegend("N =",
         position = :rb)
-    fileName = string("Abel_VIE_error.png")
-    save(string(myDirPath, fileName), fig1)
+    file_name = string("files/Abel_VIE_error.png")
+    save(string(my_dir_path, file_name), fig1)
 
-    fig2 = Figure(; size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax2 = Axis(fig2[1, 1];
+    fig2 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    ax2 = CM.Axis(fig2[1, 1];
         xlabel = "Upper Limit of Integration, x",
         ylabel = "Solution, ϕ(x)",
         titlesize = 24,
         xlabelsize = 20,
         ylabelsize = 20)
-    lines!(ax2, x₁, y₁;
-        linewidth = 3,
+    lines!(ax2, x₀, y₀;
+        linewidth = 1,
         linestyle = :solid,
         color = :red,
+        label = "10")
+    lines!(ax2, x₁, y₁;
+        linewidth = 1,
+        linestyle = :solid,
+        color = :magenta,
         label = "30")
     lines!(ax2, x₂, y₂;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :blue,
-        label = "100")
-    lines!(ax2, x₃, y₃;
-        linewidth = 3,
+        linewidth = 1,
         linestyle = :solid,
         color = :orange,
-        label = "300")
-    lines!(ax2, x₄, y₄;
-        linewidth = 3,
+        label = "100")
+    lines!(ax2, x₃, y₃;
+        linewidth = 1,
         linestyle = :solid,
         color = :cyan,
+        label = "300")
+    lines!(ax2, x₄, y₄;
+        linewidth = 1,
+        linestyle = :solid,
+        color = :blue,
         label = "1000")
     lines!(ax2, x₂, z₂;
-        linewidth = 3,
+        linewidth = 1,
         linestyle = :solid,
         color = :black,
         label = "exact")
     axislegend("N =",
         position = :lt)
-    fileName = string("Abel_VIE_soln.png")
-    save(string(myDirPath, fileName), fig2)
+    file_name = string("files/Abel_VIE_soln.png")
+    save(string(my_dir_path, file_name), fig2)
 end # Abel
 
 end # testVolterraIntEqs

@@ -608,8 +608,8 @@ where `g′ₙ` is a tensor field and `cₙ` is a scalar field that contain upda
 
 Visual presentations of the various memory functions are provided in the following figures. The top figure represents the non-singular kernels, while the bottom figure contains the weakly singular kernels.
 
-![localImage](./files/memoryFnNonSingular.png)
-![localImage](./files/memoryFnWeaklySingular.png)
+![localImage](./test/files/memoryFnNonSingular.png)
+![localImage](./test/files/memoryFnWeaklySingular.png)
 
 For illustrative purposes, the following parameters were used
 $$
@@ -662,8 +662,8 @@ f (x) = \tfrac{2}{3} x^{3/2} ,
 $$
 with results shown in the following graphs. From these figures we conclude that the solver appears to be working as expected, viz., it converges to the exact solution with decreasing step size [1].
 
-![localImage](./files/Abel_VIE_soln.png)
-![localImage](./files/Abel_VIE_error.png)
+![localImage](./test/files/Abel_VIE_soln.png)
+![localImage](./test/files/Abel_VIE_error.png)
 
 ## References
 

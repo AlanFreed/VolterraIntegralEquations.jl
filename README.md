@@ -703,6 +703,10 @@ with results shown in the following graphs. From these figures we conclude that 
 
 ## Version History
 
+### Version 0.2.3
+
+Switched from CairoMakie to Plots for making figures.
+
 ### Version 0.2.2
 
 Worked to improve the documentation and readability of the code.

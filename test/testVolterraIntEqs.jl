@@ -1,12 +1,11 @@
 module testVolterraIntEqs
 
 using
-    CairoMakie,
     PhysicalFields,
+    Plots,
     VolterraIntegralEquations
  
 import
-    CairoMakie as CM,
     PhysicalFields as PF,
     VolterraIntegralEquations as VIE
 
@@ -14,9 +13,7 @@ export
     Abel,
     memoryFns
 
-function memoryFns(my_dir_path::String)
-    N = 150
-
+function memoryFns(N::Int)
     # viscoelastic material constants for elastin
     ν   = PF.PhysicalScalar(0.59, PF.CGS_DIMENSIONLESS)
     τ_ε = PF.PhysicalScalar(9.0E-4, PF.CGS_SECOND)
@@ -139,71 +136,49 @@ function memoryFns(my_dir_path::String)
 
     # Plot the non-singular kernels.
 
-    fig1 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax1 = CM.Axis(fig1[1, 1];
-        xlabel = "time ÷ characteristic time  (t / τ_ε)",
-        ylabel = "characteristic time × memory function  (τ_ε × k)",
-        title = "Non-singular Memory Functions for Elastin",
-        titlesize = 24,
-        xlabelsize = 20,
-        ylabelsize = 20)
-    lines!(ax1, t₂, box;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :green,
-        label = "BOX")
-    lines!(ax1, t₁, mcm;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :cyan,
-        label = "MCM")
-    lines!(ax1, t₂, mpl;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :blue,
-        label = "MPL")
-    lines!(ax1, t₂, rfs;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :red,
-        label = "RFS")
-    lines!(ax1, t₂, sls;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :black,
-        label = "SLS")
-    axislegend("Function",
-        position = :rt)
-    save(string(my_dir_path, "files/memoryFnNonSingular.png"), fig1)
+    # set the path
+    my_dir_path = string(pwd(), "/files/")
+    if !isdir(my_dir_path)
+        mkdir(my_dir_path)
+    end
+
+    # set the graphics backend to GR
+    ENV["QT_QPA_PLATFORM"] = "wayland"
+    gr()
+    
+    # Plot the non-singular kernels.
+    
+    plot(t₂, box, label="BOX", linecolor=:green, linewidth=3)
+    plot!(t₁, mcm, label="MCM", linecolor=:cyan, linewidth=3)
+    plot!(t₂, mpl, label="MPL", linecolor=:blue, linewidth=3)
+    plot!(t₂, rfs, label="RFS", linecolor=:red, linewidth=3)
+    plot!(t₂, sls, label="SLS", linecolor=:black, linewidth=3)
+    plot!(size=(809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    plot!(legend=:topright)
+    plot!(left_margin=3mm, right_margin=3mm, top_margin=3mm, bottom_margin=3mm)
+    title!("Non-singular Memory Functions for Elastin")
+    xlabel!("time ÷ characteristic time  (t / τ_ε)")
+    ylabel!("characteristic time × memory function  (τ_ε × k)")
+    
+    figName = string("memoryFnNonSingular.png")
+    figPath = string(my_dir_path, figName)
+    savefig(figPath)
 
     # Plot the weakly singular kernels.
-
-    fig2 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax2 = CM.Axis(fig2[1, 1];
-        xlabel = "time ÷ characteristic time  (t / τ_ε)",
-        ylabel = "characteristic time × memory function  (τ_ε × k)",
-        title = "Weakly-singular Memory Functions for Elastin",
-        titlesize = 24,
-        xlabelsize = 20,
-        ylabelsize = 20)
-    lines!(ax2, t₁, ccm;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :blue,
-        label = "CCM")
-    lines!(ax2, t₁, fls;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :red,
-        label = "FLS")
-    lines!(ax2, t₁, kww;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :black,
-        label = "KWW")
-    axislegend("Function",
-        position = :rt)
-    save(string(my_dir_path, "files/memoryFnWeaklySingular.png"), fig2)
+    
+    plot(t₁, ccm, label="CCM", linecolor=:blue, linewidth=3)
+    plot!(t₁, fls, label="FLS", linecolor=:red, linewidth=3)
+    plot!(t₁, kww, label="KWW", linecolor=:black, linewidth=3)
+    plot!(size=(809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    plot!(legend=:topright)
+    plot!(left_margin=3mm, right_margin=3mm, top_margin=3mm, bottom_margin=3mm)
+    title!("Weakly-singular Memory Functions for Elastin")
+    xlabel!("time ÷ characteristic time  (t / τ_ε)")
+    ylabel!("characteristic time × memory function  (τ_ε × k)")
+    
+    figName = string("memoryFnWeaklySingular.png")
+    figPath = string(my_dir_path, figName)
+    savefig(figPath)
 end # memoryFns
 
 function AbelKernel(system_of_units::String, time::PF.PhysicalScalar, parameters::Tuple)::Tuple
@@ -212,9 +187,7 @@ function AbelKernel(system_of_units::String, time::PF.PhysicalScalar, parameters
     return ("Abel", kernel, tau)
 end # AbelKernel
 
-function Abel(my_dir_path::String)
-    CairoMakie.activate!(type = "png")
-
+function Abel()
     # Solve an Abel integral equation: solution parameters.
     t = PF.PhysicalScalar(10.0, PF.CGS_DIMENSIONLESS) # upper limit of integration
     p = ()
@@ -410,85 +383,50 @@ function Abel(my_dir_path::String)
     end
 
     println("Constructing the figures.")
-    fig1 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax1 = CM.Axis(fig1[1, 1];
-        xlabel = "Upper Limit of Integration, x",
-        ylabel = "Logarithm of Solution Error, log(ε)",
-        titlesize = 24,
-        xlabelsize = 20,
-        ylabelsize = 20,
-        yscale = log10)
-    lines!(ax1, e₀, ε₀;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :red,
-        label = "10")
-    lines!(ax1, e₁, ε₁;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :magenta,
-        label = "30")
-    lines!(ax1, e₂, ε₂;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :orange,
-        label = "100")
-    lines!(ax1, e₃, ε₃;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :cyan,
-        label = "300")
-    lines!(ax1, e₄, ε₄;
-        linewidth = 3,
-        linestyle = :solid,
-        color = :blue,
-        label = "1000")
-    axislegend("N =",
-        position = :rb)
-    file_name = string("files/Abel_VIE_error.png")
-    save(string(my_dir_path, file_name), fig1)
+    
+    # set the path
+    my_dir_path = string(pwd(), "/files/")
+    if !isdir(my_dir_path)
+        mkdir(my_dir_path)
+    end
 
-    fig2 = CM.Figure(size = (809, 500)) # (500ϕ, 500), ϕ is golden ratio
-    ax2 = CM.Axis(fig2[1, 1];
-        xlabel = "Upper Limit of Integration, x",
-        ylabel = "Solution, ϕ(x)",
-        titlesize = 24,
-        xlabelsize = 20,
-        ylabelsize = 20)
-    lines!(ax2, x₀, y₀;
-        linewidth = 1,
-        linestyle = :solid,
-        color = :red,
-        label = "10")
-    lines!(ax2, x₁, y₁;
-        linewidth = 1,
-        linestyle = :solid,
-        color = :magenta,
-        label = "30")
-    lines!(ax2, x₂, y₂;
-        linewidth = 1,
-        linestyle = :solid,
-        color = :orange,
-        label = "100")
-    lines!(ax2, x₃, y₃;
-        linewidth = 1,
-        linestyle = :solid,
-        color = :cyan,
-        label = "300")
-    lines!(ax2, x₄, y₄;
-        linewidth = 1,
-        linestyle = :solid,
-        color = :blue,
-        label = "1000")
-    lines!(ax2, x₂, z₂;
-        linewidth = 1,
-        linestyle = :solid,
-        color = :black,
-        label = "exact")
-    axislegend("N =",
-        position = :lt)
-    file_name = string("files/Abel_VIE_soln.png")
-    save(string(my_dir_path, file_name), fig2)
+    # set the graphics backend to GR
+    ENV["QT_QPA_PLATFORM"] = "wayland"
+    gr()
+   
+    plot(e₀, ε₀, label="10", linecolor=:red, linewidth=3)
+    plot!(e₁, ε₁, label="30", linecolor=:magenta, linewidth=3)
+    plot!(e₂, ε₂, label="100", linecolor=:orange, linewidth=3)
+    plot!(e₃, ε₃, label="300", linecolor=:cyan, linewidth=3)
+    plot!(e₄, ε₄, label="1000", linecolor=:blue, linewidth=3)
+    plot!(size=(809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    plot!(yscale=:log10, minorgrid=true)
+    ylims!(1e-10, 1)
+    plot!(legend=:bottomright)
+    plot!(left_margin=3mm, right_margin=3mm, top_margin=3mm, bottom_margin=3mm)
+    title!("Abel Kernel, Errors")
+    xlabel!("Upper Limit of Integration, x")
+    ylabel!("Solution Error, log(ε)")
+    
+    figName = string("Abel_VIE_error.png")
+    figPath = string(my_dir_path, figName)
+    savefig(figPath)
+    
+    plot(x₀, y₀, label="10", linecolor=:red, linewidth=3)
+    plot!(x₁, y₁, label="30", linecolor=:magenta, linewidth=3)
+    plot!(x₂, y₂, label="100", linecolor=:orange, linewidth=3)
+    plot!(x₃, y₃, label="300", linecolor=:cyan, linewidth=3)
+    plot!(x₄, y₄, label="1000", linecolor=:blue, linewidth=3)
+    plot!(size=(809, 500)) # (500ϕ, 500), ϕ is golden ratio
+    plot!(legend=:topleft)
+    plot!(left_margin=3mm, right_margin=3mm, top_margin=3mm, bottom_margin=3mm)
+    title!("Abel Kernel, Solutions")
+    xlabel!("Upper Limit of Integration, x")
+    ylabel!("Solution, ϕ(x)")
+    
+    figName = string("Abel_VIE_soln.png")
+    figPath = string(my_dir_path, figName)
+    savefig(figPath)
 end # Abel
 
 end # testVolterraIntEqs

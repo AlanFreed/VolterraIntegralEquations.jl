@@ -1,4 +1,4 @@
-To view this file, use a markdown viewer that renders LaTeX commands, e.g., Apostrophe.
+To view this file, use a markdown viewer that renders LaTeX commands, e.g., Remarkable.
 
 # VolterraIntegralEquations
 
